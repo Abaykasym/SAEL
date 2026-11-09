@@ -1,0 +1,20 @@
+{
+  "name": "sael-site",
+  "version": "2.1.0",
+  "private": true,
+  "description": "SAEL multilingual website with CMS, AI knowledge assistant and live staff chat",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "admin:setup": "node cms-setup.js",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "dependencies": {
+    "busboy": "^1.6.0",
+    "dotenv": "^16.4.7",
+    "nodemailer": "^10.3.0"
+  }
+}
