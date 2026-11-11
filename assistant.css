@@ -7,9 +7,39 @@
 .sael-assistant button { cursor: pointer; }
 .sael-assistant button:disabled { cursor: default; opacity: .62; }
 .sael-assistant :focus-visible { outline: 3px solid #76531c; outline-offset: 3px; }
-.sael-assistant-launcher { display: flex; align-items: center; gap: 10px; min-height: 52px; max-width: calc(100vw - 40px); padding: 8px 18px 8px 10px; border: 1px solid #fff; border-radius: 30px; color: #fff; background: var(--sael-chat-red); box-shadow: 0 6px 22px rgb(32 35 38 / 22%); font-size: 13px !important; font-weight: 700 !important; }
-.sael-assistant-launcher:hover { background: #970000; }
-.sael-assistant-launcher-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border: 1px solid rgb(255 255 255 / 60%); border-radius: 50%; font-size: 20px; font-weight: 600; }
+.sael-assistant-launcher {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 44px;
+  max-width: calc(100vw - 40px);
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+}
+.sael-assistant-professor {
+  display: block;
+  width: 124px;
+  height: 124px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 7px rgb(32 35 38 / 28%));
+}
+.sael-assistant-launcher-label {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 6px 13px;
+  border: 1px solid #fff;
+  border-radius: 30px;
+  color: #fff;
+  background: var(--sael-chat-red);
+  box-shadow: 0 4px 14px rgb(32 35 38 / 22%);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+.sael-assistant-launcher:hover .sael-assistant-launcher-label { background: #970000; }
 .sael-assistant-panel { display: flex; flex-direction: column; width: min(410px, calc(100vw - 36px)); height: min(730px, calc(100dvh - 42px)); max-height: calc(100dvh - 42px); overflow: hidden; border: 1px solid #c4c8cb; border-radius: 14px; background: #fff; box-shadow: 0 16px 64px rgb(32 35 38 / 24%); }
 .sael-assistant-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: 0 0 auto; min-height: 78px; padding: 14px 16px; border-bottom: 1px solid var(--sael-chat-line); background: #fff; }
 .sael-assistant-brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
@@ -80,7 +110,8 @@
   .sael-assistant-scroll { padding: 13px 13px 6px; }
   .sael-assistant-bottom { padding: 10px 13px; }
   .sael-assistant textarea, .sael-assistant-field input { font-size: 16px; }
-  .sael-assistant-launcher { min-height: 48px; padding-right: 15px; }
+  .sael-assistant-professor { width: 88px; height: 88px; }
+  .sael-assistant-launcher-label { min-height: 30px; padding: 4px 9px; font-size: 12px; }
   .sael-assistant-message { max-width: calc(100% - 10px); }
 }
 @media (max-height: 600px) {
