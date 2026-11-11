@@ -385,11 +385,20 @@ function renderPrice() {
     const searchText = [item.title[locale],priceDetail(item),item.detail,item.code,priceAmount(item),categories[locale][item.category]].join(" ").toLowerCase();
     return item.category === chosen && (!needle || searchText.includes(needle));
   });
-  target.innerHTML = list.length ? list.map(function(item){
+  const methodLabel = escapeHTML(t("price.th3"));
+  const priceLabel = escapeHTML(t("price.th4"));
+  const quoteLabel = t("price.request");
+  target.innerHTML = list.length ? list.map(function(item) {
+    const title = item.title[locale];
     const code = item.code ? '<small class="price-code">'+escapeHTML(t("price.code"))+': '+escapeHTML(item.code)+'</small>' : '';
-    const amount = priceAmount(item);
-    return '<tr><td>'+escapeHTML(categories[locale][item.category])+'</td><td><strong>'+escapeHTML(item.title[locale])+'</strong>'+code+'</td><td>'+escapeHTML(priceDetail(item))+'</td><td class="price-amount">'+escapeHTML(amount)+'</td><td><a class="table-request" href="#request" aria-label="'+escapeHTML(t("price.request")+": "+item.title[locale])+'">'+escapeHTML(t("price.request"))+'</a></td></tr>';
-  }).join("") : '<tr><td colspan="5">'+escapeHTML(t("price.empty"))+'</td></tr>';
+    return '<tr role="row">' +
+      '<td role="cell">'+escapeHTML(categories[locale][item.category])+'</td>' +
+      '<td role="cell"><strong>'+escapeHTML(title)+'</strong>'+code+'</td>' +
+      '<td role="cell"><span class="price-mobile-label" aria-hidden="true">'+methodLabel+'</span>'+escapeHTML(priceDetail(item))+'</td>' +
+      '<td role="cell" class="price-amount"><span class="price-mobile-label" aria-hidden="true">'+priceLabel+'</span>'+escapeHTML(priceAmount(item))+'</td>' +
+      '<td role="cell"><a class="table-request" href="#request" aria-label="'+escapeHTML(quoteLabel+": "+title)+'">'+escapeHTML(quoteLabel)+'</a></td>' +
+      '</tr>';
+  }).join("") : '<tr role="row"><td role="cell" colspan="5">'+escapeHTML(t("price.empty"))+'</td></tr>';
 }
 function renderSearchResults() {
  const input=document.getElementById("site-search"),target=document.getElementById("search-results");if(!target)return;

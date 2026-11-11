@@ -103,22 +103,69 @@
 .sael-assistant-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; color: #4c5257; font-size: 11px; font-weight: 600; }
 .sael-assistant-field input { width: 100%; min-width: 0; min-height: 38px; padding: 8px 10px; border: 1px solid #767c81; border-radius: 5px; color: var(--sael-chat-ink); background: #fff; font-size: 14px; font-weight: 400; }
 .sael-assistant-form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-@media (max-width: 620px) {
-  .sael-assistant { right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: auto; }
-  .sael-assistant-panel { width: calc(100vw - 20px); height: min(760px, calc(100dvh - 20px - env(safe-area-inset-bottom))); max-height: calc(100dvh - 20px - env(safe-area-inset-bottom)); border-radius: 11px; }
-  .sael-assistant-header { min-height: 70px; padding: 11px 13px; }
-  .sael-assistant-scroll { padding: 13px 13px 6px; }
-  .sael-assistant-bottom { padding: 10px 13px; }
-  .sael-assistant textarea, .sael-assistant-field input { font-size: 16px; }
-  .sael-assistant-professor { width: 88px; height: 88px; }
-  .sael-assistant-launcher-label { min-height: 30px; padding: 4px 9px; font-size: 12px; }
-  .sael-assistant-message { max-width: calc(100% - 10px); }
-}
 @media (max-height: 600px) {
   .sael-assistant-panel { height: calc(100dvh - 20px); max-height: calc(100dvh - 20px); }
   .sael-assistant-bottom { padding-block: 8px; }
   .sael-assistant textarea { min-height: 44px; max-height: 80px; }
   .sael-assistant-note { display: none; }
+}
+@media (max-width: 620px), (max-width: 950px) and (max-height: 500px) and (pointer: coarse) {
+  .sael-assistant {
+    --chat-top: max(10px, env(safe-area-inset-top));
+    --chat-right: max(10px, env(safe-area-inset-right));
+    --chat-bottom: max(10px, env(safe-area-inset-bottom));
+    --chat-left: max(10px, env(safe-area-inset-left));
+    right: var(--chat-right);
+    bottom: var(--chat-bottom);
+    left: auto;
+    font-size: 16px;
+  }
+  .sael-assistant:has(> .sael-assistant-panel:not([hidden])) {
+    left: var(--chat-left);
+    pointer-events: none;
+  }
+  .sael-assistant-panel {
+    width: 100%;
+    height: min(760px, calc(100dvh - var(--chat-top) - var(--chat-bottom)));
+    max-height: calc(100dvh - var(--chat-top) - var(--chat-bottom));
+    margin-inline-start: auto;
+    border-radius: 11px;
+    pointer-events: auto;
+  }
+  .sael-assistant-header { min-height: 64px; padding: 9px 12px; }
+  .sael-assistant-header h2 { font-size: 18px; }
+  .sael-assistant-scroll { min-height: 0; padding: 12px 12px 8px; }
+  .sael-assistant-bottom { padding: 9px 12px; }
+  .sael-assistant-professor { width: 72px; height: 72px; }
+  .sael-assistant-launcher-label { min-height: 36px; padding: 5px 10px; }
+  .sael-assistant-message { max-width: calc(100% - 8px); }
+  .sael-assistant-message-meta { flex-wrap: wrap; gap: 2px 10px; }
+  .sael-assistant-message-text, .sael-assistant-welcome,
+  .sael-assistant textarea, .sael-assistant-field input { font-size: 16px; line-height: 1.6; }
+  .sael-assistant-mode, .sael-assistant-availability, .sael-assistant-hours,
+  .sael-assistant-disclosure, .sael-assistant-message-meta, .sael-assistant-message-meta b,
+  .sael-assistant-sources, .sael-assistant-status, .sael-assistant-error, .sael-assistant-check,
+  .sael-assistant-input-label, .sael-assistant-counter, .sael-assistant-note,
+  .sael-assistant-contacts-title, .sael-assistant-contact-links a,
+  .sael-assistant-handoff > p, .sael-assistant-end-confirm > p,
+  .sael-assistant-field, .sael-assistant-launcher-label { font-size: 14px; }
+  .sael-assistant-close { min-width: 44px; min-height: 44px; flex: 0 0 44px; }
+  .sael-assistant-suggestion, .sael-assistant-primary, .sael-assistant-secondary,
+  .sael-assistant-human, .sael-assistant-text-button {
+    min-height: 44px;
+    font-size: 14px !important;
+  }
+  .sael-assistant-check { min-height: 44px; padding-block: 5px; }
+  .sael-assistant-check input { width: 20px; height: 20px; flex-basis: 20px; }
+  .sael-assistant textarea, .sael-assistant-field input { min-height: 44px; }
+  .sael-assistant-actions { gap: 0 12px; margin-top: 3px; }
+  .sael-assistant-contact-links a { display: inline-flex; align-items: center; max-width: 100%; min-height: 44px; }
+
+  @media (max-height: 500px) {
+    .sael-assistant-panel { max-width: 620px; overflow-y: auto; overscroll-behavior: contain; }
+    .sael-assistant-scroll { flex: 1 0 clamp(104px, 35dvh, 180px); }
+    .sael-assistant textarea { height: 48px; }
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .sael-assistant *, .sael-assistant *::before, .sael-assistant *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }

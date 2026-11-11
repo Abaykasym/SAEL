@@ -35,11 +35,18 @@ main[data-cms-unavailable="true"] > :not(.cms-unavailable) { display: none !impo
 .cms-prose table { width: 100%; border-collapse: collapse; margin-block: 20px; font-size: 14px; white-space: normal; }
 .cms-prose th, .cms-prose td { padding: 12px; border: 1px solid var(--line, #d9dcde); text-align: left; }
 .cms-prose th { background: var(--paper, #f6f5f2); }
+@media (max-width: 760px) {
+  .cms-blocks { grid-template-columns: minmax(0,1fr); }
+  .cms-prose, .cms-list { font-size: 1.0625rem; }
+  .cms-list, .cms-image figcaption, .cms-quote { overflow-wrap: anywhere; }
+  .cms-breadcrumb, .cms-image figcaption { font-size: .875rem; }
+  .cms-breadcrumb { display: inline-flex; align-items: center; min-height: 44px; margin-bottom: 22px; }
+  .cms-button { min-height: 48px; font-size: 1rem; text-align: center; overflow-wrap: anywhere; }
+  .cms-prose table { display: block; max-width: 100%; overflow-x: auto; font-size: .9375rem; }
+}
 @media (max-width: 620px) {
   .cms-section { padding-block: 42px; }
   .cms-page-hero { padding-block: 28px 42px; }
   .cms-page-hero h1 { font-size: 38px; }
-  .cms-prose, .cms-list { font-size: 15px; }
   .cms-quote { padding: 18px; }
-  .cms-prose table { display: block; overflow-x: auto; }
 }

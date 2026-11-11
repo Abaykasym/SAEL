@@ -24,23 +24,20 @@
   .about-history-event { grid-template-columns: 1fr; gap: 14px; }
   .about-equipment-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+@media(max-width:760px) {
+  .about-history-event p, .about-capability p, .about-quality-list, .about-equipment-card p { font-size: 1rem; }
+  .about-history-event, .about-capability, .about-equipment-card { overflow-wrap: anywhere; }
+  .about-capability > span, .about-equipment-card > span, .about-equipment-card small { font-size: .875rem; }
+}
 @media(max-width:620px) {
   .about-timeline { grid-template-columns: 1fr; gap: 26px; }
-  .about-history-event { grid-template-columns: 86px minmax(0,1fr); gap: 16px; padding-top: 24px; }
+  .about-history-event { grid-template-columns: minmax(0,1fr); gap: 8px; padding-top: 24px; }
   .about-history-event > b { font-size: 34px; }
   .about-history-event h3 { font-size: 23px; }
-  .about-history-event p { font-size: 13px; }
   .about-capabilities-grid { grid-template-columns: 1fr; }
   .about-capability { padding-left: 34px; }
   .about-capability h3 { font-size: 24px; }
-  .about-capability p { font-size: 13px; }
-  .about-equipment-grid { gap: 8px; }
-  .about-equipment-card { padding: 17px 13px; }
-  .about-equipment-card h3 { margin-top: 23px; font-size: 20px; overflow-wrap: anywhere; }
-  .about-equipment-card p { font-size: 10px; }
-  .about-equipment-card small { font-size: 10px; }
-  .about-quality-list { font-size: 13px; }
-}
-@media(max-width:360px) {
-  .about-equipment-grid { grid-template-columns: 1fr; }
+  .about-equipment-grid { grid-template-columns: minmax(0,1fr); gap: 10px; }
+  .about-equipment-card { padding: 18px 16px; }
+  .about-equipment-card h3 { margin-top: 14px; font-size: 22px; }
 }

@@ -97,33 +97,67 @@
 
 @media (max-width: 760px) {
   .service-detail-hero { padding-top: 25px; }
-  .service-detail-hero .breadcrumb { margin-bottom: 23px; }
-  .service-hero-grid { grid-template-columns: 1fr; gap: 25px; }
+  .service-detail-hero .breadcrumb { margin-bottom: 23px; font-size: .875rem; overflow-wrap: anywhere; }
+  .service-hero-grid { grid-template-columns: minmax(0,1fr); gap: 25px; }
   .service-hero-copy { padding-block: 0; }
   .service-hero-copy h1 { max-width: 680px; font-size: clamp(39px, 7.2vw, 54px); }
-  .service-detail-lead { max-width: 670px; font-size: 15px; }
+  .service-detail-lead { max-width: 670px; font-size: 1.0625rem; }
+  .service-hero-actions .button, .service-price-actions .button, .service-next-grid .button {
+    min-height: 46px;
+    font-size: .9375rem;
+    line-height: 1.4;
+    white-space: normal;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
   .service-hero-photo img { min-height: 0; max-height: 360px; aspect-ratio: 1.85; }
+  .service-hero-photo figcaption {
+    position: static;
+    max-width: none;
+    font-size: .875rem;
+    letter-spacing: .03em;
+    overflow-wrap: anywhere;
+  }
   .service-hero-facts { margin-top: 28px; }
   .service-hero-fact { min-height: 110px; padding: 18px 15px 20px 0; }
   .service-hero-fact + .service-hero-fact { padding-left: 15px; }
   .service-hero-fact b { font-size: 24px; }
-  .service-hero-fact span { font-size: 10px; }
-  .service-anchor-nav .wrap { gap: 26px; }
-  .service-anchor-nav a { font-size: 11px; }
+  .service-hero-fact span { font-size: .875rem; }
+  .service-anchor-nav .wrap { flex-wrap: wrap; gap: 0 18px; overflow: visible; }
+  .service-anchor-nav a {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    min-height: 44px;
+    padding-block: 8px;
+    font-size: .9375rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .service-body-section { padding-block: 60px; }
-  .service-editorial-grid, .service-sample-grid, .service-result-grid, .service-price-grid, .service-faq-grid { grid-template-columns: 1fr; gap: 28px; }
+  .service-editorial-grid, .service-sample-grid, .service-result-grid, .service-price-grid, .service-faq-grid { grid-template-columns: minmax(0,1fr); gap: 28px; }
   .service-section-label h2 { max-width: 650px; font-size: 35px; }
   .service-section-label > p:not(.eyebrow) { max-width: 660px; }
-  .service-prose p:first-child { font-size: 16px; }
+  .service-section-label > p:not(.eyebrow), .service-prose p, .service-method-card p,
+  .service-requirements li, .service-result-band p:not(.eyebrow), .service-price-row b,
+  .service-faq-grid .faq-item p, .service-next-grid p:not(.eyebrow) {
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+  }
+  .service-prose p:first-child, .service-faq-grid .faq-item summary { font-size: 1.0625rem; }
+  .service-method-index, .service-sample-tags span, .service-note p, .service-price-row small,
+  .service-price-footnote, .service-related-card > span:first-child { font-size: .875rem; }
+  .service-price-row > strong { font-size: 1.0625rem; overflow-wrap: anywhere; }
+  .service-result-band .text-link { min-height: 44px; font-size: .9375rem; }
   .service-method-grid { column-gap: 25px; }
   .service-method-card { grid-template-columns: 24px minmax(0, 1fr); gap: 10px; }
   .service-method-card h3 { font-size: 22px; }
-  .service-method-card p { font-size: 13px; }
+  .service-method-card h3, .service-hero-fact, .service-sample-tags span, .service-related-card h3 { overflow-wrap: anywhere; }
   .service-requirements { padding-left: 22px; }
   .service-result-band { padding-block: 52px; }
   .service-result-band h2 { max-width: 650px; }
   .service-next-section { padding-block: 48px; }
-  .service-next-grid { grid-template-columns: 1fr; gap: 25px; }
+  .service-next-grid { grid-template-columns: minmax(0,1fr); gap: 25px; }
   .service-next-grid > div:last-child { justify-content: flex-start; }
   .service-related-section { padding-block: 52px; }
   .service-related-card h3 { font-size: 21px; }
@@ -131,46 +165,33 @@
 }
 
 @media (max-width: 480px) {
-  .service-detail-hero .breadcrumb { font-size: 9px; gap: 6px; }
+  .service-detail-hero .breadcrumb { gap: 6px; }
   .service-hero-copy h1 { margin-bottom: 19px; font-size: clamp(36px, 10.2vw, 44px); }
-  .service-detail-lead { margin-bottom: 22px; font-size: 14px; line-height: 1.8; }
+  .service-detail-lead { margin-bottom: 22px; line-height: 1.7; }
   .service-hero-actions { gap: 8px; }
-  .service-hero-actions .button { flex: 1 1 140px; min-height: 46px; padding-inline: 13px; font-size: 11px; }
+  .service-hero-actions .button { flex: 1 1 150px; padding: 9px 13px; }
   .service-hero-photo img { aspect-ratio: 1.5; max-height: 280px; }
-  .service-hero-photo figcaption { padding: 9px 11px; font-size: 8px; }
+  .service-hero-photo figcaption { padding: 9px 11px; }
   .service-hero-facts { grid-template-columns: 1fr; margin-top: 26px; }
   .service-hero-fact { min-height: 0; display: grid; grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr); align-items: center; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--line); }
   .service-hero-fact + .service-hero-fact { padding-left: 0; border-left: 0; }
   .service-hero-fact:last-child { border-bottom: 0; }
   .service-hero-fact b { margin: 0; font-size: 23px; }
-  .service-hero-fact span { max-width: none; font-size: 10px; }
-  .service-anchor-nav .wrap { gap: 22px; }
-  .service-anchor-nav a { padding-block: 15px; font-size: 10px; }
+  .service-hero-fact span { max-width: none; }
   .service-body-section { padding-block: 48px; }
   .service-section-label h2, .service-body-section .section-head h2, .service-result-band h2, .service-next-grid h2 { font-size: 31px; }
-  .service-prose p, .service-prose p:first-child { font-size: 14px; line-height: 1.85; }
   .service-method-grid { grid-template-columns: 1fr; }
   .service-method-card { grid-template-columns: 27px minmax(0, 1fr); padding-block: 23px; }
   .service-method-card h3 { font-size: 23px; }
-  .service-method-card p { font-size: 14px; }
   .service-requirements { padding-left: 18px; }
   .service-requirements h3 { font-size: 25px; }
-  .service-requirements li { font-size: 13px; }
   .service-sample-tags { margin-top: 18px; }
-  .service-sample-tags span { font-size: 10px; }
   .service-note { padding: 14px; }
-  .service-note p { font-size: 11px; }
-  .service-result-band p:not(.eyebrow) { font-size: 14px; }
   .service-price-summary { padding: 7px 15px 18px; }
-  .service-price-row { align-items: flex-start; gap: 15px; padding-block: 15px; }
-  .service-price-row b { font-size: 12px; }
-  .service-price-row small { font-size: 9px; }
-  .service-price-row > strong { max-width: 42%; font-size: 13px; }
-  .service-price-actions .button { flex: 1 1 120px; padding-inline: 10px; }
-  .service-faq-grid .faq-item summary { font-size: 14px; }
-  .service-faq-grid .faq-item p { font-size: 13px; }
+  .service-price-row { display: grid; grid-template-columns: minmax(0,1fr); gap: 5px; padding-block: 15px; }
+  .service-price-row > strong { max-width: none; text-align: left; }
+  .service-price-actions .button { flex: 1 1 130px; padding: 9px 10px; }
   .service-next-grid > div:last-child { flex-direction: column; align-items: stretch; }
-  .service-next-grid p:not(.eyebrow) { font-size: 13px; }
   .service-related-grid { grid-template-columns: 1fr; gap: 0; }
   .service-related-card { min-height: 120px; padding-block: 20px; border-bottom: 0; }
   .service-related-card:last-child { border-bottom: 1px solid var(--line); }

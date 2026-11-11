@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
   <meta name="theme-color" content="#B80000">
   <meta name="description" content="Независимая аналитическая лаборатория SAEL. Геохимические, металлургические, экологические и инспекционные исследования в Кыргызстане.">
   <meta property="og:type" content="website">
@@ -12,12 +12,12 @@
   <title>SAEL — независимая аналитическая лаборатория</title>
   <link rel="canonical" href="https://sael.kg/">
   <link rel="icon" type="image/png" href="assets/sael-logo-mark.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=mobile-readability">
   <script defer src="price-translations.js"></script>
-  <link rel="stylesheet" href="cms-public.css">
+  <link rel="stylesheet" href="cms-public.css?v=mobile-readability">
   <script defer src="cms-client.js"></script>
-  <script defer src="app.js"></script>
-  <link rel="stylesheet" href="assistant.css?v=professor">
+  <script defer src="app.js?v=mobile-readability"></script>
+  <link rel="stylesheet" href="assistant.css?v=mobile-readability">
   <script defer src="assistant-client.js?v=professor"></script>
 </head>
 <body>
@@ -215,7 +215,7 @@
     <section class="section price-section" id="price">
       <div class="wrap">
         <div class="section-head">
-          <div><p class="eyebrow"><span class="eyebrow-index">07</span><span data-i18n="price.eyebrow">Стоимость</span></p><h2 data-i18n="price.title">Прайс-лист</h2></div>
+          <div><p class="eyebrow"><span class="eyebrow-index">07</span><span data-i18n="price.eyebrow">Стоимость</span></p><h2 id="price-heading" data-i18n="price.title">Прайс-лист</h2></div>
           <p class="section-intro" data-i18n="price.intro">Стоимость зависит от материала, метода и состава исследования. Для расчёта отправьте запрос с данными о пробах.</p>
         </div>
         <div class="price-controls">
@@ -226,9 +226,17 @@
         <p class="price-prompt" id="price-prompt" role="status" data-i18n="price.prompt">Выберите направление, чтобы увидеть услуги и цены.</p>
         <div id="price-results" hidden>
         <div class="table-wrap">
-          <table class="price-table">
-            <thead><tr><th data-i18n="price.th1">Направление</th><th data-i18n="price.th2">Услуга / код</th><th data-i18n="price.th3">Метод / параметры</th><th data-i18n="price.th4">Стоимость, USD</th><th data-i18n="price.th5">Запрос</th></tr></thead>
-            <tbody id="price-body"></tbody>
+          <table class="price-table" role="table" aria-labelledby="price-heading">
+            <thead role="rowgroup">
+              <tr role="row">
+                <th role="columnheader" scope="col" data-i18n="price.th1">Направление</th>
+                <th role="columnheader" scope="col" data-i18n="price.th2">Услуга / код</th>
+                <th role="columnheader" scope="col" data-i18n="price.th3">Метод / параметры</th>
+                <th role="columnheader" scope="col" data-i18n="price.th4">Стоимость, USD</th>
+                <th role="columnheader" scope="col" data-i18n="price.th5">Запрос</th>
+              </tr>
+            </thead>
+            <tbody id="price-body" role="rowgroup"></tbody>
           </table>
         </div>
         <p class="price-note"><span class="note-mark">i</span><span data-i18n="price.note">Цены приведены в USD по предоставленному прайс-листу и указаны за пробу, если не сказано иначе. Налоги не включены. Составные программы и отдельные варианты подтвердите у специалиста SAEL.</span></p>
