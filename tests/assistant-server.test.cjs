@@ -8,7 +8,7 @@ async function fixture(t, extra = {}) {
   process.env.CMS_DATA_DIR = folder; delete process.env.PUBLIC_ORIGIN; delete process.env.CMS_PUBLIC_ORIGIN;
   let clock = Date.parse("2026-11-09T04:00:00Z"); const notifications = [], calls = [], data = content();
   const options = { root: folder, getContent: async () => ({ content: data }), now: () => clock, aiConfigured: () => true,
-    authorizeAdmin: async (req, write) => { if (req.headers.authorization !== "Bearer test-admin") throw Object.assign(new Error("unauthorized"), { status: 401, code: "unauthorized" }); if (write && req.headers["x-csrf-token"] !== "test-csrf") throw Object.assign(new Error("csrf_invalid"), { status: 403, code: "csrf_invalid" }); return { id: req.headers["x-staff-id"] || "staff-1", username: "private-admin@example.test", role: "admin" }; },
+    authorizeAdmin: async (req, write) => { if (req.headers.authorization !== "Bearer test-admin") throw Object.assign(new Error("unauthorized"), { status: 401, code: "unauthorized" }); if (write && req.headers["x-csrf-token"] !== "test-csrf") throw Object.assign(new Error("csrf_invalid"), { status: 403, code: "csrf_invalid" }); return { id: req.headers["x-staff-id"] || "staff-1", username: "private-admin@example.test", role: req.headers["x-staff-role"] || "admin" }; },
     answer: async input => { calls.push(input); return { text: "Ответ на основе знаний", sources: [{ id: "service", title: "Услуга", url: "/service.html?service=preparation" }, { id: "evil", title: "Bad", url: "javascript:alert(1)" }], mode: "ai", role: "staff" }; },
     notify: async input => { notifications.push(input); return { sent: true }; }, ...extra };
   const assistant = createAssistant(options), instances = [assistant];
@@ -53,6 +53,18 @@ test("private visitor tokens, consent, model identity and persistence", async t 
   assert.equal((await f.request(base + "/messages", "POST", { text: "after close" }, one.headers)).status, 409);
 });
 
+test("visitor config does not substitute the private routing address for a hidden public address", async t => {
+  const f = await fixture(t);
+  f.data.settings.email = "";
+  f.data.assistant.handoffEmail = "private-routing@example.test";
+  f.data.assistant.avatar = "assets/sael-professor-kg.webp";
+  const response = await f.request("/api/assistant/config");
+  assert.equal(response.status, 200);
+  assert.equal(response.json.email, "");
+  assert.equal(response.json.avatar, "/assets/sael-professor-kg.webp");
+  assert(!response.text.includes(f.data.assistant.handoffEmail));
+});
+
 test("live invitations require office hours, presence, consent and explicit staff claim", async t => {
   const f = await fixture(t), one = await f.create(), base = "/api/assistant/conversations/" + one.id, staff = "/api/admin/assistant/conversations/" + one.id;
   assert.equal((await f.request("/api/admin/assistant/conversations")).status, 401);
@@ -84,6 +96,30 @@ test("closed-hour requests save callbacks accurately and notifications are conse
   response = await f.request("/api/admin/assistant/conversations/" + one.id + "/messages", "POST", { text: "Специалист ответил вне рабочего времени" }, f.admin); assert.equal(response.status, 200);
   response = await f.request(base, "GET", undefined, one.headers); assert.equal(response.json.conversation.messages.at(-1).actor, "staff"); assert.equal(response.json.conversation.staffConnected, true);
   response = await f.request("/api/assistant/config"); assert.equal(response.json.staffOnline, false); assert.equal(response.json.isWorkingHours, false); assert(!response.text.includes("staff-1"));
+});
+
+test("assistant managers see only conversations shared with staff by the visitor", async t => {
+  const f = await fixture(t);
+  const manager = { ...f.admin, "x-staff-role": "assistant_manager" };
+  const otherManager = { ...manager, "x-staff-id": "staff-2" };
+  const list = "/api/admin/assistant/conversations";
+  const privateChat = await f.create(), sharedChat = await f.create();
+  await f.request("/api/assistant/conversations/" + privateChat.id + "/messages", "POST", { text: "Assistant-only message" }, privateChat.headers);
+  assert.equal((await f.request(list, "GET", undefined, f.admin)).json.conversations.length, 2);
+  assert.deepEqual((await f.request(list, "GET", undefined, manager)).json.conversations, []);
+  assert.equal((await f.request(list + "/" + privateChat.id, "GET", undefined, manager)).status, 404);
+  assert.equal((await f.request(list + "/" + privateChat.id + "/close", "POST", {}, manager)).status, 404);
+  await f.request("/api/admin/assistant/presence", "POST", { online: true }, manager);
+  const visitor = "/api/assistant/conversations/" + sharedChat.id;
+  assert.equal((await f.request(visitor + "/handoff", "POST", { name: "Test visitor", consent: true }, sharedChat.headers)).status, 200);
+  const adminChat = list + "/" + sharedChat.id;
+  const rows = (await f.request(list, "GET", undefined, manager)).json.conversations;
+  assert.deepEqual(rows.map(item => item.id), [sharedChat.id]);
+  assert.equal((await f.request(adminChat, "GET", undefined, manager)).status, 200);
+  assert.equal((await f.request(adminChat + "/claim", "POST", {}, manager)).status, 200);
+  assert.equal((await f.request(adminChat + "/close", "POST", {}, otherManager)).status, 409);
+  assert.equal((await f.request(adminChat + "/messages", "POST", { text: "Staff response" }, manager)).status, 200);
+  assert.equal((await f.request(adminChat + "/close", "POST", {}, manager)).json.conversation.status, "closed");
 });
 
 test("an explicit handoff wins over a model response already in progress", async t => {

@@ -134,7 +134,7 @@
         for (const item of services) if (bindings.categories?.[lang] && !own(bindings.categories[lang], item.category)) bindings.categories[lang][item.category] = item.category;
       }
       if (bindings.servicePhotos) {
-        for (const item of services) bindings.servicePhotos[item.id] = safeUrl(item.photo, true) || "assets/sael-logo-mark.png";
+        for (const item of services) bindings.servicePhotos[item.id] = safeUrl(item.photo, true) || "assets/sael-logo-mark.svg";
       }
     }
     if (own(content, "priceEntries")) replace(bindings.priceEntries, content.priceEntries.filter(published));
@@ -317,7 +317,25 @@
   }
   function renderSettings(locale) {
     const settings = state.content.settings || {};
-    for (const [key, selector] of [["logoFull", ".brand-logo-full"], ["logoMark", ".brand-logo-mark"]]) if (own(settings, key)) document.querySelectorAll(selector).forEach(image => { const src = safeUrl(settings[key], true); if (src) image.src = src; });
+    const favicon = safeUrl(settings.favicon, true);
+    const faviconExtension = favicon.match(/\.(png|jpe?g|webp)$/i)?.[1].toLowerCase();
+    if (faviconExtension) {
+      const faviconType = faviconExtension === "jpg" ? "image/jpeg" : "image/" + faviconExtension;
+      document.querySelectorAll('link[rel="icon"]').forEach(link => {
+        link.href = favicon;
+        link.type = faviconType;
+      });
+    }
+    for (const [key, variant] of [["logoFull", "full"], ["logoMark", "mark"]]) {
+      const src = safeUrl(settings[key], true);
+      if (!src) continue;
+      const builtIn = new URL("assets/sael-logo-" + variant + ".png", document.baseURI);
+      const current = new URL(src, document.baseURI);
+      const vector = current.origin === builtIn.origin && current.pathname === builtIn.pathname
+        ? builtIn.href.replace(/\.png$/, ".svg")
+        : src;
+      document.querySelectorAll(".brand-logo-" + variant).forEach(image => { image.src = vector; });
+    }
     document.querySelectorAll('a[href^="tel:"]').forEach(link => {
       const secondary = link.dataset.cmsSecondary === "true" || /34251/.test(link.getAttribute("href"));
       link.dataset.cmsSecondary = String(secondary); const value = secondary ? settings.phoneSecondary : settings.phone;

@@ -9,11 +9,20 @@ const { promisify } = require("node:util");
 const Busboy = require("busboy");
 const scrypt = promisify(crypto.scrypt);
 const { defaultAssistant } = require("./assistant-config");
+const { siteImagePath } = require("./site-assets");
 
 const COOKIE = "sael_cms_session";
 const MAX_BODY = 3 * 1024 * 1024;
 const MAX_MEDIA = 10 * 1024 * 1024;
 const SESSION_MS = 8 * 60 * 60 * 1000;
+const ROLES = new Set(["admin", "assistant_manager"]);
+const MAX_USERS = 100;
+const MAX_SESSIONS_PER_USER = 10;
+const DUMMY_PASSWORD_HASH = `scrypt$16384$8$1$${"0".repeat(32)}$${"0".repeat(128)}`;
+const SHARED_ADMIN_PATHS = new Set([
+  "/api/admin/content", "/api/admin/logout", "/api/admin/password",
+  "/api/admin/totp/status", "/api/admin/totp/setup", "/api/admin/totp/enable", "/api/admin/totp/disable"
+]);
 const TOP_LEVEL = new Set(["schemaVersion", "settings", "copy", "services", "priceEntries", "categories", "priceTranslations", "serviceContent", "aboutContent", "processSteps", "clientSteps", "faqs", "pages", "menus", "sections", "documents", "partners", "equipment", "images"]);
 const COLLECTIONS = ["services", "priceEntries", "pages", "sections", "documents", "partners", "equipment", "images"];
 TOP_LEVEL.add("assistant");
@@ -23,9 +32,14 @@ const MESSAGES = {
   invalid_json: "Не удалось прочитать данные запроса.", invalid_content: "Проверьте структуру и содержимое материала.",
   revision_conflict: "Материал уже изменён в другой вкладке. Обновите данные перед сохранением.",
   unauthorized: "Войдите в панель администратора.", invalid_credentials: "Неверные данные для входа или код подтверждения.",
+  forbidden_role: "У вашей роли нет доступа к этому действию.",
   forbidden_origin: "Запрос отклонён: адрес страницы не совпадает с адресом сайта.", csrf_invalid: "Сессия обновилась. Перезагрузите страницу и повторите действие.",
   https_required: "Для входа на хостинге настройте HTTPS и PUBLIC_ORIGIN.", rate_limited: "Слишком много попыток. Повторите через 15 минут.",
-  password_weak: "Пароль должен содержать от 12 до 128 символов.", username_invalid: "Логин: от 3 до 80 букв, цифр, точек, дефисов или подчёркиваний.",
+  password_weak: "Пароль должен содержать от 12 до 128 символов.", username_invalid: "Введите адрес электронной почты до 80 символов или логин от 3 до 80 латинских букв, цифр, точек, дефисов или подчёркиваний.",
+  user_invalid: "Проверьте настройки пользователя.", username_taken: "Пользователь с таким логином уже существует.",
+  user_not_found: "Пользователь не найден.", user_limit: "Достигнут предел числа пользователей.",
+  last_admin: "Нужно оставить хотя бы одного активного администратора.",
+  own_account: "Свой пароль можно изменить в настройках аккаунта. Роль и доступ к своему аккаунту меняет другой администратор.",
   setup_unavailable: "Первичная настройка недоступна. Проверьте CMS_SETUP_TOKEN в закрытых настройках сервера.", setup_complete: "Администратор уже создан. Используйте вход.",
   setup_token_invalid: "Неверный код первичной настройки.", upload_type: "Разрешены изображения JPG, PNG, WebP и документы PDF.",
   file_too_large: "Размер файла превышает 10 МБ.", request_too_large: "Запрос превышает допустимый размер.", empty_file: "Выбран пустой файл.",
@@ -49,6 +63,20 @@ function random() { return crypto.randomBytes(32).toString("base64url"); }
 function inside(parent, child) { const relative = path.relative(parent, child); return relative === "" || (!relative.startsWith(".." + path.sep) && relative !== ".." && !path.isAbsolute(relative)); }
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function safeName(value) { return String(value || "file").replace(/[\r\n\x00-\x1f\\/]/g, "_").slice(0, 160); }
+function accountRole(user) { return user.role === undefined ? "admin" : user.role; }
+function accountActive(user) { return !!user && !user.disabled && ROLES.has(accountRole(user)); }
+function requireAdmin(user) { if (accountRole(user) !== "admin") fail(403, "forbidden_role"); }
+function normalizeUsername(value) {
+  if (typeof value !== "string") fail(400, "username_invalid");
+  const username = value.trim();
+  if (/^[a-z0-9][a-z0-9_.-]{2,79}$/i.test(username)) return username;
+  if (username.length <= 80 && /^[a-z0-9_%+-]+(?:\.[a-z0-9_%+-]+)*@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/i.test(username)) return username.toLowerCase();
+  fail(400, "username_invalid");
+}
+function usernameKey(value) { return typeof value === "string" ? value.trim().toLowerCase() : ""; }
+function requireUniqueUsername(users, username, except) {
+  if (users.some(user => user.id !== except && usernameKey(user.username) === usernameKey(username))) fail(409, "username_taken");
+}
 function safeUrl(value) {
   if (typeof value !== "string" || value.length > 4000 || /[\x00-\x20\\]/.test(value) || value.startsWith("//")) return false;
   if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return /^(https?:|mailto:|tel:)/i.test(value);
@@ -87,6 +115,9 @@ function validateContent(content) {
   walk(content, 0);
   if (Buffer.byteLength(JSON.stringify(content)) > MAX_BODY) fail(413, "request_too_large");
   OBJECTS.forEach(key => { if (!object(content[key])) fail(400, "invalid_content"); });
+  for (const value of [content.settings.favicon, content.settings.shareImage, content.assistant?.avatar]) {
+    if (value !== undefined && value !== "" && !siteImagePath(value)) fail(400, "invalid_content");
+  }
   for (const key of COLLECTIONS) {
     if (!Array.isArray(content[key]) || content[key].length > 5000) fail(400, "invalid_content");
     const ids = new Set();
@@ -121,7 +152,7 @@ function validateContent(content) {
   if (content.assistant !== undefined) {
     const assistant=content.assistant;
     if (!object(assistant) || typeof assistant.enabled!=="boolean" || typeof assistant.instructions!=="string" || !Array.isArray(assistant.knowledge) || assistant.knowledge.length>500) fail(400,"invalid_content");
-    if (Object.keys(assistant).some(key=>!["enabled","title","welcome","instructions","hours","handoffEmail","knowledge"].includes(key))) fail(400,"invalid_content");
+    if (Object.keys(assistant).some(key=>!["enabled","title","welcome","instructions","hours","handoffEmail","knowledge","avatar"].includes(key))) fail(400,"invalid_content");
     for (const name of ["title","welcome"]) if (!object(assistant[name]) || ["ru","kg","en"].some(lang=>typeof assistant[name][lang]!=="string")) fail(400,"invalid_content");
     if (typeof assistant.handoffEmail!=="string" || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(assistant.handoffEmail)) fail(400,"invalid_content");
     const hours=assistant.hours;
@@ -264,18 +295,39 @@ function createCms(options) {
   }
   function cookie(req, res, token, clear = false) { res.setHeader("Set-Cookie", `${COOKIE}=${clear ? "" : token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${clear ? 0 : SESSION_MS / 1000}${secure(req) ? "; Secure" : ""}`); }
   function token(req) { const match = String(req.headers.cookie || "").match(new RegExp(`(?:^|;\\s*)${COOKIE}=([a-zA-Z0-9_-]{30,100})(?:;|$)`)); return match ? match[1] : ""; }
-  async function session(req, write) {
-    const state = await auth(), key = token(req), item = key && state.sessions.find(s => equal(s.hash, hash(key)) && s.expiresAt > Date.now());
+  function authenticatedUser(state, sessionHash) {
+    const item = sessionHash && state.sessions.find(s => equal(s.hash, sessionHash) && s.expiresAt > Date.now());
     const user = item && state.users.find(u => u.id === item.userId);
-    if (!user) fail(401, "unauthorized");
+    if (!accountActive(user)) fail(401, "unauthorized");
+    return { item, user };
+  }
+  async function session(req, write) {
+    const state = await auth(), key = token(req);
+    const { item, user } = authenticatedUser(state, key && hash(key));
     if (write) { origin(req); if (!equal(String(req.headers["x-csrf-token"] || ""), item.csrfToken)) fail(403, "csrf_invalid"); }
-    return { state, item, user };
+    return { item, user };
   }
   function newSession(state, user) {
     const value = random(), item = { hash: hash(value), userId: user.id, csrfToken: random(), createdAt: Date.now(), expiresAt: Date.now() + SESSION_MS };
-    state.sessions = state.sessions.filter(s => s.expiresAt > Date.now()).slice(-49); state.sessions.push(item); return { value, item };
+    const now = Date.now(), live = state.sessions.filter(s => s.expiresAt > now);
+    const old = live.filter(s => s.userId === user.id).slice(0, -(MAX_SESSIONS_PER_USER - 1));
+    const obsolete = new Set(old.map(s => s.hash));
+    state.sessions = live.filter(s => !obsolete.has(s.hash));
+    state.sessions.push(item);
+    return { value, item };
   }
-  function userView(user) { return { id: user.id, username: user.username, role: user.role || "admin", totpEnabled: !!user.totpSecret }; }
+  function userView(user) {
+    return {
+      id: user.id, username: user.username, role: accountRole(user), disabled: !!user.disabled,
+      totpEnabled: !!user.totpSecret, createdAt: user.createdAt || null
+    };
+  }
+  function contentView(state, user) {
+    const payload = accountRole(user) === "admin"
+      ? state.content
+      : { assistant: { knowledge: state.content.assistant.knowledge } };
+    return { content: payload, revision: state.revision, updatedAt: state.updatedAt };
+  }
   function json(res, status, body) { const payload = Buffer.from(JSON.stringify(body)); res.statusCode = status; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.setHeader("Cache-Control", "no-store"); res.setHeader("X-Content-Type-Options", "nosniff"); res.setHeader("Content-Length", payload.length); res.end(payload); }
   async function body(req) {
     if (!String(req.headers["content-type"] || "").toLowerCase().startsWith("application/json")) fail(415, "invalid_json");
@@ -369,11 +421,13 @@ function createCms(options) {
           if (pathname.endsWith("/setup")) {
             if (state.users.length) fail(409, "setup_complete"); const setup = String(process.env.CMS_SETUP_TOKEN || "");
             if (setup.length < 32) fail(503, "setup_unavailable"); if (!equal(String(input.token || ""), setup)) fail(403, "setup_token_invalid");
-            if (typeof input.username !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_.-]{2,79}$/.test(input.username)) fail(400, "username_invalid");
-            user = { id: crypto.randomUUID(), username: input.username, passwordHash: await passwordHash(input.password), role: "admin", createdAt: new Date().toISOString() }; state.users.push(user);
+            const username = normalizeUsername(input.username);
+            user = { id: crypto.randomUUID(), username, passwordHash: await passwordHash(input.password), role: "admin", createdAt: new Date().toISOString() }; state.users.push(user);
           } else {
-            user = state.users.find(item => String(item.username).toLowerCase() === String(input.username || "").toLowerCase());
-            if (!user || !await passwordMatches(input.password, user.passwordHash)) fail(401, "invalid_credentials");
+            user = state.users.find(item => usernameKey(item.username) === usernameKey(input.username));
+            const active = accountActive(user);
+            const matches = await passwordMatches(input.password, active ? user.passwordHash : DUMMY_PASSWORD_HASH);
+            if (!active || !matches) fail(401, "invalid_credentials");
             if (user.totpSecret) { const step = totpStep(user.totpSecret, input.code, user.totpLastStep); if (step === null) fail(401, "invalid_credentials"); user.totpLastStep = step; }
           }
           const created = newSession(state, user); await atomic(files.auth, state); await audit(user.username, pathname.endsWith("/setup") ? "admin_created" : "login"); return { user, ...created };
@@ -381,9 +435,76 @@ function createCms(options) {
         cookie(req, res, result.value); json(res, 200, { ok: true, csrfToken: result.item.csrfToken, user: userView(result.user) }); return true;
       }
       const current = await session(req, !["GET", "HEAD"].includes(req.method));
+      if (!SHARED_ADMIN_PATHS.has(pathname)) requireAdmin(current.user);
       if (pathname === "/api/admin/logout" && req.method === "POST") {
         await mutate(async () => { const state = await auth(); state.sessions = state.sessions.filter(item => item.hash !== current.item.hash); await atomic(files.auth, state); await audit(current.user.username, "logout"); });
         cookie(req, res, "", true); json(res, 200, { ok: true }); return true;
+      }
+      if (pathname === "/api/admin/users") {
+        if (req.method === "GET") {
+          const state = await auth();
+          requireAdmin(authenticatedUser(state, current.item.hash).user);
+          json(res, 200, { users: state.users.map(userView) });
+          return true;
+        }
+        if (req.method !== "POST") fail(405, "method_not_allowed");
+        const input = await body(req);
+        if (!ROLES.has(input.role) || Object.keys(input).some(key => !["username", "password", "role"].includes(key))) fail(400, "user_invalid");
+        const username = normalizeUsername(input.username);
+        const encoded = await passwordHash(input.password);
+        const user = await mutate(async () => {
+          const state = await auth(), actor = authenticatedUser(state, current.item.hash).user;
+          requireAdmin(actor);
+          if (state.users.length >= MAX_USERS) fail(409, "user_limit");
+          requireUniqueUsername(state.users, username);
+          const record = { id: crypto.randomUUID(), username, passwordHash: encoded, role: input.role, createdAt: new Date().toISOString() };
+          state.users.push(record);
+          await atomic(files.auth, state);
+          await audit(actor.username, "user_created", { userId: record.id, role: record.role });
+          return userView(record);
+        });
+        json(res, 201, { user });
+        return true;
+      }
+      const userPath = pathname.match(/^\/api\/admin\/users\/([0-9a-f-]{36})$/);
+      if (userPath) {
+        if (req.method !== "PATCH") fail(405, "method_not_allowed");
+        const input = await body(req), keys = Object.keys(input);
+        if (!keys.length || keys.some(key => !["username", "role", "disabled", "password"].includes(key))
+          || (input.role !== undefined && !ROLES.has(input.role))
+          || (input.disabled !== undefined && typeof input.disabled !== "boolean")) fail(400, "user_invalid");
+        const username = input.username === undefined ? undefined : normalizeUsername(input.username);
+        const encoded = input.password === undefined ? undefined : await passwordHash(input.password);
+        const user = await mutate(async () => {
+          const state = await auth(), actor = authenticatedUser(state, current.item.hash).user;
+          requireAdmin(actor);
+          const record = state.users.find(item => item.id === userPath[1]);
+          if (!record) fail(404, "user_not_found");
+          const nextRole = input.role ?? accountRole(record), nextDisabled = input.disabled ?? !!record.disabled;
+          const accessChanged = nextRole !== accountRole(record) || nextDisabled !== !!record.disabled;
+          const isSelf = record.id === actor.id;
+          if (accountActive(record) && accountRole(record) === "admin" && (nextRole !== "admin" || nextDisabled)
+            && !state.users.some(item => item.id !== record.id && accountActive(item) && accountRole(item) === "admin")) fail(409, "last_admin");
+          if (isSelf && (accessChanged || encoded)) fail(409, "own_account");
+          if (username !== undefined) requireUniqueUsername(state.users, username, record.id);
+          const nameChanged = username !== undefined && username !== record.username;
+          if (nameChanged || accessChanged || encoded) {
+            const actorName = actor.username;
+            if (nameChanged) record.username = username;
+            if (input.role !== undefined) record.role = nextRole;
+            if (input.disabled !== undefined) record.disabled = nextDisabled;
+            if (encoded) {
+              record.passwordHash = encoded;
+              delete record.totpPending;
+            }
+            state.sessions = state.sessions.filter(item => item.userId !== record.id || (isSelf && item.hash === current.item.hash));
+            await atomic(files.auth, state);
+            await audit(actorName, "user_updated", { userId: record.id, renamed: nameChanged, role: nextRole, disabled: nextDisabled, passwordReset: !!encoded });
+          }
+          return userView(record);
+        });
+        json(res, 200, { user });
+        return true;
       }
       if (pathname === "/api/admin/backups") {
         if (req.method !== "GET") fail(405, "method_not_allowed");
@@ -405,34 +526,67 @@ function createCms(options) {
         const input = await body(req); if (!Number.isSafeInteger(input.revision)) fail(400, "invalid_content");
         await content();
         const state = await mutate(async () => {
+          const actor = authenticatedUser(await auth(), current.item.hash).user;
+          requireAdmin(actor);
           const previous = await read(files.content, null); if (!previous || previous.revision !== input.revision) fail(409, "revision_conflict", { revision: previous?.revision });
           const snapshot = await read(path.join(backupDir, restore[1]), null); if (!snapshot || !object(snapshot.content)) fail(404, "backup_not_found");
           validateContent(snapshot.content);
           const next = { schemaVersion: 1, revision: previous.revision + 1, updatedAt: new Date().toISOString(), content: clone(snapshot.content) };
-          await backup(previous); await atomic(files.content, next); await audit(current.user.username, "content_restored", { sourceRevision: snapshot.revision, revision: next.revision }); return next;
+          await backup(previous); await atomic(files.content, next); await audit(actor.username, "content_restored", { sourceRevision: snapshot.revision, revision: next.revision }); return next;
         });
         json(res, 200, { content: state.content, revision: state.revision, updatedAt: state.updatedAt }); return true;
       }
       if (pathname === "/api/admin/content") {
-        if (req.method === "GET") { const state = await content(); json(res, 200, { content: state.content, revision: state.revision, updatedAt: state.updatedAt }); return true; }
-        if (req.method !== "PUT") fail(405, "method_not_allowed"); const input = await body(req); validateContent(input.content);
-        if (!Number.isSafeInteger(input.revision)) fail(400, "invalid_content"); await content();
-        const state = await mutate(async () => {
+        if (req.method === "GET") {
+          const state = await content(), { user } = authenticatedUser(await auth(), current.item.hash);
+          json(res, 200, contentView(state, user));
+          return true;
+        }
+        if (req.method !== "PUT") fail(405, "method_not_allowed");
+        const input = await body(req);
+        if (!Number.isSafeInteger(input.revision)) fail(400, "invalid_content");
+        await content();
+        const result = await mutate(async () => {
+          const { user } = authenticatedUser(await auth(), current.item.hash), admin = accountRole(user) === "admin";
           const previous = await read(files.content, null); if (!previous || previous.revision !== input.revision) fail(409, "revision_conflict", { revision: previous?.revision });
-          const next = { schemaVersion: 1, revision: previous.revision + 1, updatedAt: new Date().toISOString(), content: input.content };
-          await backup(previous); await atomic(files.content, next); await audit(current.user.username, "content_saved", { revision: next.revision }); return next;
-        }); json(res, 200, { content: state.content, revision: state.revision, updatedAt: state.updatedAt }); return true;
+          let updated = input.content;
+          if (!admin) {
+            if (!object(updated) || Object.keys(updated).some(key => key !== "assistant")
+              || !object(updated.assistant) || Object.keys(updated.assistant).some(key => key !== "knowledge")
+              || !Array.isArray(updated.assistant.knowledge)) fail(403, "forbidden_role");
+            updated = {
+              ...previous.content,
+              assistant: { ...(previous.content.assistant || defaultAssistant()), knowledge: updated.assistant.knowledge }
+            };
+          }
+          validateContent(updated);
+          const next = { schemaVersion: 1, revision: previous.revision + 1, updatedAt: new Date().toISOString(), content: updated };
+          await backup(previous);
+          await atomic(files.content, next);
+          await audit(user.username, admin ? "content_saved" : "assistant_knowledge_saved", { revision: next.revision });
+          return contentView(next, user);
+        });
+        json(res, 200, result);
+        return true;
       }
       if (pathname === "/api/admin/password" && req.method === "POST") {
         const input = await body(req), encoded = await passwordHash(input.newPassword);
-        await mutate(async () => { const state = await auth(), user = state.users.find(u => u.id === current.user.id); if (!user || !await passwordMatches(input.currentPassword, user.passwordHash)) fail(401, "invalid_credentials"); user.passwordHash = encoded; state.sessions = []; await atomic(files.auth, state); await audit(user.username, "password_changed"); });
+        await mutate(async () => {
+          const state = await auth(), { user } = authenticatedUser(state, current.item.hash);
+          if (!await passwordMatches(input.currentPassword, user.passwordHash)) fail(401, "invalid_credentials");
+          user.passwordHash = encoded;
+          delete user.totpPending;
+          state.sessions = state.sessions.filter(item => item.userId !== user.id);
+          await atomic(files.auth, state);
+          await audit(user.username, "password_changed");
+        });
         cookie(req, res, "", true); json(res, 200, { ok: true }); return true;
       }
       if (pathname === "/api/admin/totp/status" && req.method === "GET") { json(res, 200, { enabled: !!current.user.totpSecret }); return true; }
       if (pathname.startsWith("/api/admin/totp/") && req.method === "POST") {
         const input = await body(req);
         const answer = await mutate(async () => {
-          const state = await auth(), user = state.users.find(u => u.id === current.user.id); if (!user) fail(401, "unauthorized");
+          const state = await auth(), { user } = authenticatedUser(state, current.item.hash);
           if (pathname.endsWith("/setup")) {
             if (!await passwordMatches(input.currentPassword, user.passwordHash)) fail(401, "invalid_credentials");
             user.totpPending = { secret: base32(crypto.randomBytes(20)), at: Date.now() }; await atomic(files.auth, state);
@@ -447,7 +601,7 @@ function createCms(options) {
             if (!user.totpSecret || totpStep(user.totpSecret, input.code, user.totpLastStep) === null) fail(400, "totp_invalid");
             delete user.totpSecret; delete user.totpLastStep; delete user.totpPending;
           } else fail(404, "not_found");
-          state.sessions = state.sessions.filter(s => s.hash === current.item.hash); await atomic(files.auth, state); await audit(user.username, "totp_changed", { enabled: !!user.totpSecret }); return { ok: true, enabled: !!user.totpSecret };
+          state.sessions = state.sessions.filter(s => s.userId !== user.id || s.hash === current.item.hash); await atomic(files.auth, state); await audit(user.username, "totp_changed", { enabled: !!user.totpSecret }); return { ok: true, enabled: !!user.totpSecret };
         }); json(res, 200, answer); return true;
       }
       if (pathname === "/api/admin/media") {
@@ -456,9 +610,11 @@ function createCms(options) {
         const upload = await parseUpload(req), type = uploadType(upload), id = crypto.randomUUID(), storageName = id + type.ext;
         const record = { id, storageName, url: "/uploads/" + storageName, filename: upload.filename, mime: type.mime, size: upload.content.length, alt: "", createdAt: new Date().toISOString() };
         await mutate(async () => {
+          const actor = authenticatedUser(await auth(), current.item.hash).user;
+          requireAdmin(actor);
           const list = await media(), limit = Math.max(10, Math.min(Number(process.env.CMS_MEDIA_LIMIT_MB) || 512, 10240)) * 1024 * 1024;
           if (list.length >= 5000 || list.reduce((sum, item) => sum + item.size, 0) + record.size > limit) fail(413, "media_storage_full");
-          await fsp.writeFile(path.join(mediaDir, storageName), upload.content, { flag: "wx", mode: 0o600 }); list.push(record); await atomic(files.media, list); await audit(current.user.username, "media_uploaded", { id, size: record.size });
+          await fsp.writeFile(path.join(mediaDir, storageName), upload.content, { flag: "wx", mode: 0o600 }); list.push(record); await atomic(files.media, list); await audit(actor.username, "media_uploaded", { id, size: record.size });
         }); json(res, 201, { media: mediaView(record) }); return true;
       }
       const match = pathname.match(/^\/api\/admin\/media\/([a-f0-9-]{36})$/);
@@ -467,10 +623,12 @@ function createCms(options) {
         if (req.method === "DELETE") await content();
         if (input) { if (input.alt !== undefined) { if (typeof input.alt === "string") checkText(input.alt); else if (object(input.alt)) { for (const lang of ["ru", "kg", "en"]) { if (typeof input.alt[lang] !== "string") fail(400, "invalid_content"); checkText(input.alt[lang]); } } else fail(400, "invalid_content"); } }
         const record = await mutate(async () => {
+          const actor = authenticatedUser(await auth(), current.item.hash).user;
+          requireAdmin(actor);
           const list = await media(), index = list.findIndex(item => item.id === match[1]); if (index < 0) fail(404, "media_not_found"); const item = list[index];
-          if (req.method === "PATCH") { if (input.alt !== undefined) item.alt = input.alt; if (input.filename !== undefined) item.filename = safeName(input.filename); await atomic(files.media, list); await audit(current.user.username, "media_updated", { id: item.id }); return item; }
+          if (req.method === "PATCH") { if (input.alt !== undefined) item.alt = input.alt; if (input.filename !== undefined) item.filename = safeName(input.filename); await atomic(files.media, list); await audit(actor.username, "media_updated", { id: item.id }); return item; }
           const state = await read(files.content, null); if (!state || JSON.stringify(state.content).includes(item.url)) fail(409, "media_in_use");
-          list.splice(index, 1); await atomic(files.media, list); await fsp.unlink(path.join(mediaDir, item.storageName)).catch(error => { if (error.code !== "ENOENT") console.error("cms_media_cleanup_failed"); }); await audit(current.user.username, "media_deleted", { id: item.id }); return null;
+          list.splice(index, 1); await atomic(files.media, list); await fsp.unlink(path.join(mediaDir, item.storageName)).catch(error => { if (error.code !== "ENOENT") console.error("cms_media_cleanup_failed"); }); await audit(actor.username, "media_deleted", { id: item.id }); return null;
         }); json(res, 200, record ? { media: mediaView(record) } : { ok: true }); return true;
       }
       fail(404, "not_found");

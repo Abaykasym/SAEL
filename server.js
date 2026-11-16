@@ -15,6 +15,7 @@ const { createCms } = require("./cms-server");
 const cms = createCms({root:ROOT,publicRoot:PUBLIC_ROOT,seed:JSON.parse(fs.readFileSync(path.join(ROOT,"cms-seed.json"),"utf8"))});
 const { createAssistant } = require("./assistant-server");
 const { createAnswerer } = require("./assistant-ai");
+const { renderSiteAssets } = require("./site-assets");
 const assistant = createAssistant({root:ROOT,getContent:cms.getContent,authorizeAdmin:cms.authorizeAdmin,answer:createAnswerer({root:ROOT}),aiConfigured:()=>!!process.env.OPENAI_API_KEY,notify:notifyAssistantHandoff});
 const PORT = Number(process.env.PORT || 8020);
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -45,6 +46,8 @@ const PUBLIC_FILES = new Map([
   ["/admin/admin.js", [ADMIN_DIR+"admin.js", "text/javascript; charset=utf-8"]],
   ["/assets/sael-logo-full.png", ["assets/sael-logo-full.png", "image/png"]],
   ["/assets/sael-logo-mark.png", ["assets/sael-logo-mark.png", "image/png"]],
+  ["/assets/sael-logo-full.svg", ["assets/sael-logo-full.svg", "image/svg+xml"]],
+  ["/assets/sael-logo-mark.svg", ["assets/sael-logo-mark.svg", "image/svg+xml"]],
   ["/assets/sael-professor.png", ["assets/sael-professor.png", "image/png"]],
   ["/assets/sael-professor-kg.webp", ["assets/sael-professor-kg.webp", "image/webp"]],
   ["/assets/sael-video-poster.jpg", ["assets/sael-video-poster.jpg", "image/jpeg"]],
@@ -363,6 +366,16 @@ async function handleQuoteRequest(req, res) {
   }
 }
 
+function publicPageOrigin(req) {
+  const configured = process.env.PUBLIC_ORIGIN || process.env.CMS_PUBLIC_ORIGIN;
+  const host = req.headers.host || "";
+  if (!configured && !/^[a-z0-9.\-:\[\]]+$/i.test(host)) return "";
+  try {
+    const url = new URL(configured || (req.socket.encrypted ? "https://" : "http://") + host);
+    return ["http:", "https:"].includes(url.protocol) ? url.origin : "";
+  } catch { return ""; }
+}
+
 function serveStatic(req, res, pathname) {
   if (req.method !== "GET" && req.method !== "HEAD") {
     sendJson(res, 405, { error: "method_not_allowed" });
@@ -377,11 +390,19 @@ function serveStatic(req, res, pathname) {
   }
   const [filename, type] = entry;
   const filePath = path.join(PUBLIC_ROOT, filename);
-  fs.readFile(filePath, (error, content) => {
+  fs.readFile(filePath, async (error, content) => {
     if (error) {
       res.statusCode = 500;
       res.end("Server error");
       return;
+    }
+    if (["index.html", "about.html", "service.html", "page.html"].includes(filename)) {
+      try {
+        const snapshot = await cms.getContent();
+        content = Buffer.from(renderSiteAssets(content.toString("utf8"), snapshot.content, publicPageOrigin(req)));
+      } catch {
+        // The public page remains available with bundled defaults when CMS data is unavailable.
+      }
     }
     res.statusCode = 200;
     res.setHeader("Content-Type", type);

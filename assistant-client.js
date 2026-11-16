@@ -4,6 +4,7 @@
   if (window.saelAssistantMounted || !["http:", "https:"].includes(location.protocol)) return;
   window.saelAssistantMounted = true;
   const STORAGE_KEY = "sael-assistant-session-v1", MAX_TEXT = 1500;
+  const DEFAULT_PORTRAIT = "/assets/sael-professor-kg.webp";
   const copy = {
     ru: {
       launcher: "Помощник SAEL", close: "Свернуть чат", title: "Помощник SAEL", ai: "ИИ-помощник", knowledge: "Справочник SAEL", staff: "Специалист SAEL", you: "Вы", system: "Статус обращения", sources: "Источники", welcome: "Помогу найти услугу, расценки и требования к образцам. При необходимости вопрос можно передать специалисту SAEL.",
@@ -101,13 +102,13 @@
   }
   function renderContacts() {
     refs.contacts.replaceChildren();
-    const settings = state.config || {}, phone = String(settings.phone || "+996 3133 31925"), email = String(settings.email || "sael.karabalta@saelglobal.com");
-    const title = node("p", "sael-assistant-contacts-title", t("contacts")); refs.contacts.append(title);
+    const settings = state.config || {}, phone = String(settings.phone ?? ""), email = String(settings.email ?? "");
     const links = node("div", "sael-assistant-contact-links");
     const number = phone.replace(/[^+0-9]/g, "");
     if (/^\+?[0-9]{5,20}$/.test(number)) { const link = node("a", "", phone); link.href = "tel:" + number; link.setAttribute("aria-label", t("phone") + ": " + phone); links.append(link); }
     if (/^[^\s@?\r\n]+@[^\s@?\r\n]+\.[^\s@?\r\n]+$/.test(email)) { const link = node("a", "", email); link.href = "mailto:" + email; link.setAttribute("aria-label", t("email") + ": " + email); links.append(link); }
-    refs.contacts.append(links);
+    refs.contacts.hidden = !links.childElementCount;
+    if (links.childElementCount) refs.contacts.append(node("p", "sael-assistant-contacts-title", t("contacts")), links);
   }
   function renderMessages() {
     const messages = state.conversation?.messages || [], signature = lang() + ":" + JSON.stringify(messages);
@@ -133,8 +134,16 @@
     }
     if (nearBottom || state.busy) refs.scroll.scrollTop = refs.scroll.scrollHeight;
   }
+  function renderPortrait() {
+    const source = state.config?.avatar || DEFAULT_PORTRAIT;
+    if (refs.professor.dataset.portrait === source) return;
+    refs.professor.dataset.portrait = source;
+    refs.professor.hidden = false;
+    refs.professor.src = source;
+  }
   function render() {
     if (!refs.root || typeof document==="undefined" || !document.documentElement) return;
+    renderPortrait();
     const closed = state.conversation?.status === "closed", hasConversation = !!state.conversation;
     refs.root.lang = lang() === "kg" ? "ky" : lang();
     refs.launcherLabel.textContent = t("launcher"); refs.launcher.setAttribute("aria-label", t("launcher")); refs.launcher.setAttribute("aria-expanded", String(state.open));
@@ -263,20 +272,22 @@
   function build() {
     refs.root = node("div", "sael-assistant"); refs.root.id = "sael-assistant";
     refs.launcher = button("sael-assistant-launcher", openPanel); refs.launcher.setAttribute("aria-controls", "sael-assistant-panel"); refs.launcher.setAttribute("aria-haspopup", "dialog");
-    const professor = node("img", "sael-assistant-professor");
+    const professor = refs.professor = node("img", "sael-assistant-professor");
     professor.alt = "";
     professor.width = 224;
     professor.height = 224;
     professor.decoding = "async";
     professor.fetchPriority = "low";
     professor.draggable = false;
-    professor.addEventListener("error", () => { professor.hidden = true; });
-    professor.src = new URL("assets/sael-professor-kg.webp", document.baseURI).href;
+    professor.addEventListener("error", () => {
+      if (professor.getAttribute("src") !== DEFAULT_PORTRAIT) professor.src = DEFAULT_PORTRAIT;
+      else professor.hidden = true;
+    });
     refs.launcherLabel = node("span", "sael-assistant-launcher-label");
     refs.launcher.append(professor, refs.launcherLabel);
     refs.panel = node("section", "sael-assistant-panel"); refs.panel.id = "sael-assistant-panel"; refs.panel.setAttribute("role", "dialog"); refs.panel.setAttribute("aria-modal", "false"); refs.panel.setAttribute("aria-labelledby", "sael-assistant-title"); refs.panel.hidden = true;
     const header = node("header", "sael-assistant-header"), brand = node("div", "sael-assistant-brand");
-    const logo = node("img", "sael-assistant-logo"); logo.src = new URL("assets/sael-logo-mark.png", document.baseURI).href; logo.alt = ""; logo.width = 40; logo.height = 40;
+    const logo = node("img", "sael-assistant-logo"); logo.src = new URL("assets/sael-logo-mark.svg", document.baseURI).href; logo.alt = ""; logo.width = 40; logo.height = 40;
     const heading = node("div"); refs.title = node("h2"); refs.title.id = "sael-assistant-title"; refs.mode = node("p", "sael-assistant-mode"); heading.append(refs.title, refs.mode); brand.append(logo, heading);
     refs.close = button("sael-assistant-close", closePanel); refs.close.textContent = "×"; header.append(brand, refs.close);
     refs.scroll = node("div", "sael-assistant-scroll");

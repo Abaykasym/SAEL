@@ -10,8 +10,15 @@
     ["overview","Обзор","◫","РАБОЧЕЕ ПРОСТРАНСТВО"],["pages","Страницы","▤"],["sections","Разделы страниц","▥"],["menus","Меню и навигация","☷"],["copy","Тексты сайта","T"],
     ["assistant","ИИ-помощник","✦","ОБЩЕНИЕ С КЛИЕНТАМИ"],["assistantInbox","Диалоги","◌"],
     ["services","Услуги","⚗","МАТЕРИАЛЫ ЛАБОРАТОРИИ"],["priceEntries","Прайс-лист","≡"],["faqs","Частые вопросы","?"],["documents","Документы","▱"],["equipment","Оборудование","⌘"],["partners","Партнёры","◇"],
-    ["media","Медиатека","▧","НАСТРОЙКИ"],["images","Изображения сайта","▣"],["aboutContent","О компании","◎"],["processSteps","Этапы анализа","↗"],["clientSteps","Шаги для клиентов","→"],["settings","Общие настройки","⚙"],["backups","История и восстановление","↶"]
+    ["media","Медиатека","▧","НАСТРОЙКИ"],["images","Изображения сайта","▣"],["aboutContent","О компании","◎"],["processSteps","Этапы анализа","↗"],["clientSteps","Шаги для клиентов","→"],["settings","Общие настройки","⚙"],["backups","История и восстановление","↶"],["users","Пользователи","♙"]
   ];
+  const userRoles = { admin:"Администратор", assistant_manager:"Менеджер ИИ-помощника" };
+  const managerNav = [
+    ["assistantKnowledge","База знаний и обучение","✦","ИИ-ПОМОЩНИК"],
+    ["assistantInbox","Диалоги","◌"]
+  ];
+  const isManager = () => state.user?.role === "assistant_manager";
+  const isAdmin = () => state.user?.role === "admin";
   const labels = { id:"Идентификатор",schemaVersion:"Версия структуры",title:"Заголовок",name:"Название",label:"Подпись",description:"Описание",desc:"Краткое описание",text:"Текст",body:"Текст",lead:"Вступительный текст",slug:"Адрес страницы",status:"Публикация",kind:"Тип страницы",serviceId:"Связанная услуга",blocks:"Содержимое раздела",category:"Направление",icon:"Значок",method:"Метод / технология",methods:"Методы и процедуры",methodsTitle:"Заголовок блока методов",samples:"Образцы",sampleTags:"Виды образцов",requirements:"Требования к образцам",result:"Результат для клиента",material:"Материал",photo:"Фотография",src:"Изображение",alt:"Описание изображения (alt)",url:"Ссылка",href:"Ссылка",target:"Открытие ссылки",page:"Страница",enabled:"Показывать раздел",code:"Код услуги",detail:"Метод / параметры — исходный текст",amount:"Стоимость — исходный текст",detailLocalized:"Метод / параметры на сайте",amountLocalized:"Стоимость на сайте",caption:"Подпись",logo:"Логотип",type:"Тип",model:"Модель",manufacturer:"Производитель",showOnHome:"Показывать на главной",selector:"Область на сайте",sourceUrl:"Источник",facts:"Ключевые показатели",overviewTitle:"Заголовок описания",overview:"Описание",note:"Дополнительные условия",faq:"Частые вопросы",equipmentTitle:"Заголовок оборудования",equipmentIntro:"Вступление об оборудовании",historyTitle:"Заголовок истории",history:"История",capabilitiesTitle:"Направления деятельности",capabilities:"Направления деятельности",qualityTitle:"Заголовок о качестве",qualityText:"Текст о качестве",qualityBullets:"Принципы качества",ctaTitle:"Заголовок призыва к действию",ctaText:"Текст призыва к действию",siteName:"Название сайта",phone:"Основной телефон",phoneSecondary:"Дополнительный телефон",email:"Электронная почта",address:"Почтовый адрес",hours:"Режим работы",logoFull:"Полный логотип",logoMark:"Компактный логотип",pricePdf:"Прайс-лист PDF",limsUrl:"LIMS кабинет",videoUrl:"Видео YouTube",mapUrl:"Карта",items:"Пункты списка",level:"Уровень заголовка" };
   const groupLabels = { hero:"Первый экран",about:"О лаборатории",stat:"Показатели",services:"Услуги",service:"Карточки услуг",quality:"Качество",equipment:"Оборудование",process:"Порядок анализа",clients:"Клиентам",sample:"Подготовка образцов",price:"Прайс-лист",quote:"Коммерческое предложение",faq:"Частые вопросы",contact:"Контакты",form:"Форма запроса КП",footer:"Подвал сайта",nav:"Меню",search:"Поиск",detail:"Страницы услуг",serviceUi:"Подписи на страницах услуг",aboutUi:"Подписи страницы компании",partners:"Партнёры",certificates:"Сертификаты",media:"Видео",brand:"Логотип",menu:"Мобильное меню",language:"Переключение языков",visual:"Визуальные подписи" };
   const specialLabels = { "hero.title":"Главный заголовок","hero.lead":"Основное описание","hero.sub":"Дополнительное описание","hero.cta":"Кнопка запроса КП","hero.price":"Кнопка прайса","contact.address":"Адрес лаборатории","contact.hours":"Режим работы","footer.legal":"Юридическое название","nav.cta":"Кнопка запроса КП","partners.title":"Заголовок партнёров","topline":"Верхняя строка сайта","skip":"Ссылка перехода к содержимому" };
@@ -23,7 +30,8 @@
     return mediaOnly&&!url.startsWith("/")&&!/^[a-z][a-z0-9+.-]*:/i.test(url)?"/"+url.replace(/^\.\//,""):url;
   }
   function titleFor(view) { return view==="assistantKnowledge"?"База знаний помощника":view==="priceCategories"?"Направления прайса":nav.find(item=>item[0]===view)?.[1] || view; }
-  function labelFor(key) { return labels[key] || specialLabels[key] || String(key).replace(/([a-z])([A-Z])/g,"$1 $2"); }
+  const siteImageLabels = { favicon: "Значок вкладки (favicon)", shareImage: "Обложка для ссылок в соцсетях", avatar: "Портрет помощника" };
+  function labelFor(key) { return labels[key] || specialLabels[key] || siteImageLabels[key] || String(key).replace(/([a-z])([A-Z])/g,"$1 $2"); }
   function local(value) { return value && typeof value==="object" && !Array.isArray(value) ? value[state.lang] || value.ru || value.en || "" : value; }
   function read(path) { return path.reduce((value,key)=>value == null ? undefined : value[key],state.content); }
   function write(path,value) {
@@ -46,7 +54,7 @@
     const response=await fetch(url,{...options,headers,credentials:"same-origin",cache:"no-store"});
     const data=await response.json().catch(()=>({}));
     if(!response.ok) {
-      if(response.status===401 && state.content) { if(state.dirty)state.pendingDraft={content:clone(state.content),revision:state.revision};state.content=null;showAuth({setupRequired:false}); }
+      if(response.status===401 && state.content) { if(state.dirty)state.pendingDraft={content:clone(state.content),revision:state.revision,userId:state.user?.id,role:state.user?.role};state.content=null;showAuth({setupRequired:false}); }
       throw new ApiError(data.message || ({401:"Войдите в панель заново.",403:"Действие не разрешено. Обновите страницу и войдите заново.",409:"Содержимое изменилось на сервере.",413:"Файл слишком большой. Максимум — 10 МБ.",429:"Слишком много попыток. Повторите позже."}[response.status]) || "Не удалось выполнить действие. Проверьте соединение и повторите.",response.status,data.error);
     }
     return data;
@@ -61,15 +69,22 @@
   }
   function languageSwitch() { return '<div class="lang-switch" role="group" aria-label="Язык редактирования">'+langs.map(lang=>'<button type="button" data-action="language" data-lang="'+lang+'" class="'+(lang===state.lang?"active":"")+'" aria-pressed="'+(lang===state.lang)+'">'+lang.toUpperCase()+'</button>').join("")+'</div>'; }
   function drawNav() {
-    $("#sidebar-nav").innerHTML=nav.map(([id,name,icon,group])=>(group?'<p class="nav-group-label">'+esc(group)+'</p>':"")+'<button type="button" class="nav-item '+((state.view===id||id==="assistant"&&state.view==="assistantKnowledge")?"active":"")+'" data-action="navigate" data-view="'+id+'" '+((state.view===id||id==="assistant"&&state.view==="assistantKnowledge")?'aria-current="page"':"")+'><span class="nav-icon" aria-hidden="true">'+icon+'</span><span>'+esc(name)+'</span>'+(["pages","services","priceEntries","documents","equipment","partners"].includes(id)?'<span class="nav-count">'+(state.content?.[id]?.length||0)+'</span>':"")+'</button>').join("");
+    const items = isManager() ? managerNav : nav.filter(([id]) => id !== "users" || isAdmin());
+    $("#sidebar-nav").innerHTML=items.map(([id,name,icon,group])=>(group?'<p class="nav-group-label">'+esc(group)+'</p>':"")+'<button type="button" class="nav-item '+((state.view===id||id==="assistant"&&state.view==="assistantKnowledge")?"active":"")+'" data-action="navigate" data-view="'+id+'" '+((state.view===id||id==="assistant"&&state.view==="assistantKnowledge")?'aria-current="page"':"")+'><span class="nav-icon" aria-hidden="true">'+icon+'</span><span>'+esc(name)+'</span>'+(["pages","services","priceEntries","documents","equipment","partners"].includes(id)?'<span class="nav-count">'+(state.content?.[id]?.length||0)+'</span>':"")+'</button>').join("");
   }
   function showAuth(session) {
     stopOperatorRuntime(false);
+    state.user=null;state.users=[];state.media=[];state.mediaPath=null;state.backups=[];
+    state.inboxConversations=[];state.inboxDrafts={};state.inboxDetails={};
+    state.inboxSelectedId="";state.inboxDetailSignature="";state.inboxQuery="";
+    state.operatorPresence=null;state.operatorPresenceError="";
+    $("#workspace").replaceChildren();
+    $("#media-dialog-content").replaceChildren();
     state.setup=!!session.setupRequired;state.setupAvailable=!!session.setupAvailable;
     document.querySelectorAll("dialog[open]").forEach(dialog=>dialog.close());
     $("#boot-screen").hidden=true;$("#admin-app").hidden=true;$("#auth-screen").hidden=false;
     $("#auth-title").textContent=state.setup?"Первый администратор":"Вход в панель";
-    $("#auth-description").textContent=state.setup ? (state.setupAvailable?"Введите код настройки из закрытых параметров сервера и создайте личную учётную запись.":"Доступ ещё не настроен. Задайте CMS_SETUP_TOKEN длиной не менее 32 символов в закрытых переменных сервера, перезапустите приложение и обновите страницу.") : "Введите данные администратора сайта.";
+    $("#auth-description").textContent=state.setup ? (state.setupAvailable?"Введите код настройки из закрытых параметров сервера и создайте личную учётную запись.":"Доступ ещё не настроен. Задайте CMS_SETUP_TOKEN длиной не менее 32 символов в закрытых переменных сервера, перезапустите приложение и обновите страницу.") : "Введите email или логин своей учётной записи.";
     $("#setup-token-wrap").hidden=!state.setup||!state.setupAvailable;
     $("#setup-token").required=state.setup&&state.setupAvailable;
     if(!state.setup)$("#setup-token").value="";
@@ -86,9 +101,18 @@
     state.csrf=session.csrfToken||state.csrf;state.user=session.user||state.user;
     const result=await api("/api/admin/content");if(!result.content||typeof result.content!=="object")throw new Error("Сервер не вернул содержимое сайта.");
     state.content=result.content;state.revision=result.revision;state.dirty=false;
-    if(state.pendingDraft){if(confirm("Восстановить несохранённые изменения из этого окна?")){state.content=state.pendingDraft.content;state.revision=state.pendingDraft.revision;state.dirty=true;}state.pendingDraft=null;}
+    if(state.pendingDraft){
+      const draft=state.pendingDraft;
+      if (draft.userId && draft.userId===state.user?.id && draft.role===state.user?.role && confirm("Восстановить несохранённые изменения из этого окна?")) {
+        state.content=draft.content;state.revision=draft.revision;state.dirty=true;
+      }
+      state.pendingDraft=null;
+    }
+    state.view=isManager()?"assistantKnowledge":"overview";
+    state.item=null;state.query="";
     $("#boot-screen").hidden=true;$("#auth-screen").hidden=true;$("#admin-app").hidden=false;
     $("#account-name").textContent=state.user?.username||state.user?.name||"Администратор";
+    $("#account-role").textContent=userRoles[state.user?.role]||"Настройки доступа";
     drawNav();render();updateSaveState();
   }
   async function save() {
@@ -100,7 +124,11 @@
     finally { state.busy=false;updateSaveState(); }
   }
   function closeSidebar() { document.body.classList.remove("sidebar-open");$("#sidebar-toggle").setAttribute("aria-expanded","false");$("#sidebar-shade").hidden=true;$(".admin-main").inert=false; }
-  function navigate(view) { if(state.view==="assistantInbox"&&view!=="assistantInbox")stopOperatorRuntime(false);state.view=view;state.item=null;state.query="";drawNav();render();closeSidebar();$("#workspace").focus(); }
+  function navigate(view) {
+    if ((isManager() && !managerNav.some(([id])=>id===view)) || (view==="users" && !isAdmin())) return;
+    if(state.view==="assistantInbox"&&view!=="assistantInbox")stopOperatorRuntime(false);
+    state.view=view;state.item=null;state.query="";drawNav();render();closeSidebar();$("#workspace").focus();
+  }
   function render() {
     $("#view-title").textContent=titleFor(state.view);
     $("#view-eyebrow").textContent=state.view==="overview"?"ПАНЕЛЬ УПРАВЛЕНИЯ":state.view==="settings"?"ПАРАМЕТРЫ САЙТА":"РЕДАКТИРОВАНИЕ КОНТЕНТА";
@@ -108,6 +136,7 @@
     if(state.view==="overview")workspace.innerHTML=overview();
     else if(state.view==="assistant"){workspace.innerHTML=assistantEditor();refreshAssistantConfig();}
     else if(state.view==="assistantInbox"){workspace.innerHTML=inboxEditor();startOperatorRuntime();}
+    else if(state.view==="users"){workspace.innerHTML='<div id="users-workspace" aria-live="polite"><p class="media-loading">Загружаем пользователей…</p></div>';loadUsers();}
     else if(state.view==="backups"){workspace.innerHTML='<div id="backups-workspace"><p class="media-loading">Загружаем историю изменений…</p></div>';loadBackups();}
     else if(state.view==="media") { workspace.innerHTML='<div id="media-workspace"><p class="media-loading">Загружаем файлы…</p></div>';loadMedia(false); }
     else if(state.view==="copy")workspace.innerHTML=copyEditor();
@@ -181,8 +210,13 @@
     return '<section class="editor-card"><h2>Содержание раздела · '+lang.toUpperCase()+'</h2><p class="editor-help">Изменения этих полей обновляют существующий раздел. Дополнительные блоки из редактора выше появятся после его основного содержания.</p>'+fields+(links.length?'<hr class="section-divider"><div class="field-tools">'+links.map(view=>'<button type="button" class="button small" data-action="navigate" data-view="'+view+'">Управлять: '+esc(titleFor(view))+' →</button>').join("")+'</div>':"")+'</section>';
   }
   function rootEditor(key) {
-    const descriptions={settings:"Общие контакты, логотипы и ссылки используются по всему сайту.",aboutContent:"История компании, направления деятельности и система качества. Выберите язык для редактирования.",processSteps:"Порядок шагов соответствует порядку показа на главной странице.",clientSteps:"Эти шаги показываются в блоке «Как начать работу»."};
-    return '<div class="toolbar"><p class="toolbar-note">'+(descriptions[key]||"")+'</p><div class="toolbar-right">'+languageSwitch()+'</div></div><div class="settings-grid"><section class="editor-card">'+field(state.content[key],[key],titleFor(key),0)+'</section></div>';
+    const descriptions={settings:"Контакты, оформление и ссылки используются по всему сайту.",aboutContent:"История компании, направления деятельности и система качества. Выберите язык для редактирования.",processSteps:"Порядок шагов соответствует порядку показа на главной странице.",clientSteps:"Эти шаги показываются в блоке «Как начать работу»."};
+    const value = key === "settings" ? { ...state.content.settings } : state.content[key];
+    if (key === "settings") {
+      value.favicon ??= "";
+      value.shareImage ??= "";
+    }
+    return '<div class="toolbar"><p class="toolbar-note">'+(descriptions[key]||"")+'</p><div class="toolbar-right">'+languageSwitch()+'</div></div><div class="settings-grid"><section class="editor-card">'+field(value,[key],titleFor(key),0)+'</section></div>';
   }
   function copyEditor() {
     const copy=state.content.copy?.[state.lang]||{},groups=[...new Set(Object.keys(copy).map(key=>key.split(".")[0]))];
@@ -226,7 +260,7 @@
     else if(key==="level")control='<select id="'+id+'" data-path="'+binding+'" data-value-type="number"><option value="2" '+(Number(value)===2?"selected":"")+'>H2 — заголовок раздела</option><option value="3" '+(Number(value)===3?"selected":"")+'>H3 — подзаголовок</option></select>';
     else if(key==="type"&&path.includes("blocks"))control='<input id="'+id+'" value="'+esc(text)+'" readonly>';
     else {
-      const mediaKey=/^(src|photo|logo|logoFull|logoMark|pricePdf)$/.test(key),urlKey=mediaKey||/^(url|href|videoUrl|limsUrl|mapUrl|sourceUrl)$/.test(key);
+      const mediaKey=/^(src|photo|logo|logoFull|logoMark|pricePdf)$/.test(key)||Object.hasOwn(siteImageLabels,key),urlKey=mediaKey||/^(url|href|videoUrl|limsUrl|mapUrl|sourceUrl)$/.test(key);
       const multiline=!readonly&&!urlKey&&!number&&(rich||path[0]==="assistant"&&path.includes("knowledge")&&path.includes("text")||path.includes("blocks")&&path.includes("text")||text.length>100||/\n/.test(text)||/^(text|body|lead|desc|description|overview|result|requirements|note|caption|qualityText|ctaText|equipmentIntro)$/.test(key));
       if(multiline) {
         const formatted=!!rich||path.includes("blocks")&&path.includes("text");
@@ -338,10 +372,13 @@
     catch(error){const target=dialog?$("#media-dialog-content"):$("#media-workspace");if(target)target.innerHTML='<p class="global-error">'+esc(error.message)+'</p>';}
   }
   function mediaView(dialog) {
-    return '<div class="upload-box"><div><h3>Добавить файл</h3><p>JPG, PNG, WebP или PDF · до 10 МБ</p></div><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" data-media-upload="'+(dialog?"dialog":"workspace")+'" aria-label="Загрузить файл"></div><div class="media-toolbar"><p class="toolbar-note">Файлов: '+state.media.length+'</p><input class="search-input" type="search" data-media-search placeholder="Поиск по имени файла…" aria-label="Поиск файлов"></div>'+(state.media.length?'<div class="media-grid">'+state.media.map(file=>{
+    const imageOnly = dialog && Object.hasOwn(siteImageLabels,state.mediaPath?.at(-1));
+    const files = imageOnly ? state.media.filter(file => /^image\/(jpeg|png|webp)$/.test(file.mime)) : state.media;
+    const accept = "image/jpeg,image/png,image/webp" + (imageOnly ? "" : ",application/pdf");
+    return '<div class="upload-box"><div><h3>Добавить файл</h3><p>JPG, PNG, WebP'+(imageOnly?"":" или PDF")+' · до 10 МБ</p></div><input type="file" accept="'+accept+'" data-media-upload="'+(dialog?"dialog":"workspace")+'" aria-label="Загрузить файл"></div><div class="media-toolbar"><p class="toolbar-note">Файлов: '+files.length+'</p><input class="search-input" type="search" data-media-search placeholder="Поиск по имени файла…" aria-label="Поиск файлов"></div>'+(files.length?'<div class="media-grid">'+files.map(file=>{
       const url=safeUrl(file.url,true),image=/^image\//.test(file.mime),alt=local(file.alt)||"";
       return '<article class="media-card" data-media-card data-search="'+esc((file.filename+" "+alt).toLocaleLowerCase("ru"))+'"><div class="media-visual">'+(image&&url?'<img src="'+esc(url)+'" alt="'+esc(alt)+'" loading="lazy">':'<span class="file-badge">PDF</span>')+'</div><div class="media-info"><strong>'+esc(file.filename)+'</strong><small>'+esc(file.mime)+' · '+formatBytes(file.size)+'</small><label>Описание / alt<input type="text" value="'+esc(alt)+'" data-media-alt="'+esc(file.id)+'" maxlength="500"></label><div class="row-actions">'+(dialog?'<button type="button" data-action="select-media" data-id="'+esc(file.id)+'">Выбрать</button>':"")+'<button type="button" data-action="save-media-alt" data-id="'+esc(file.id)+'">Сохранить alt</button><button type="button" data-action="copy-media" data-id="'+esc(file.id)+'">Ссылка</button><button type="button" data-action="delete-media" data-id="'+esc(file.id)+'">Удалить</button></div><p class="media-url">'+esc(file.url)+'</p></div></article>';
-    }).join("")+'</div>':'<div class="empty-state"><h3>Медиатека пока пуста</h3><p>Загрузите фотографии, логотипы или PDF. Затем выберите их в редакторе материала.</p></div>');
+    }).join("")+'</div>':'<div class="empty-state"><h3>'+ (imageOnly?"Нет подходящих изображений":"Медиатека пока пуста") +'</h3><p>Загрузите нужный файл, затем выберите его в редакторе.</p></div>');
   }
   function formatBytes(size) { return Number(size)>=1048576?(Number(size)/1048576).toFixed(1)+" МБ":Math.max(1,Math.round(Number(size)/1024))+" КБ"; }
   function displayDate(value) { const date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleString("ru-RU",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"Дата не указана"; }
@@ -362,13 +399,89 @@
   }
   function exportContent() { const blob=new Blob([JSON.stringify({revision:state.revision,exportedAt:new Date().toISOString(),content:state.content},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="sael-content-"+new Date().toISOString().slice(0,10)+".json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast("Копия контента скачана."); }
   async function openAccount() { $("#account-dialog").showModal();$("#password-form").reset();$("#password-message").hidden=true;state.totpSecret=null;state.totpUrl=null;await refreshTotp(); }
+  async function loadUsers() {
+    const workspace = $("#users-workspace");
+    if (!workspace || !isAdmin()) return;
+    try {
+      const {users}=await api("/api/admin/users");
+      if ($("#users-workspace")!==workspace || !isAdmin()) return;
+      state.users=users;
+      workspace.innerHTML=usersView(users);
+    } catch(error) {
+      if ($("#users-workspace")===workspace) {
+        workspace.innerHTML='<p class="form-message error">'+esc(error.message)+'</p><button type="button" class="button" data-action="users-refresh">Повторить</button>';
+      }
+    }
+  }
+  function usersView(users) {
+    const rows=users.map(user=>{
+      const self=user.id===state.user.id;
+      const role=userRoles[user.role]||user.role;
+      return '<li class="admin-user-row"><div class="admin-user-name"><strong>'+esc(user.username)+'</strong>'+(self?'<small>Ваша учётная запись</small>':'')+'</div><div class="admin-user-details"><span>'+esc(role)+'</span><span class="status-pill '+(user.disabled?"draft":"")+'">'+(user.disabled?"Доступ отключён":"Доступ открыт")+'</span></div><button type="button" class="button small" data-action="users-edit" data-id="'+esc(user.id)+'" aria-label="Изменить '+esc(user.username)+'">Изменить</button></li>';
+    }).join("");
+    return '<section class="panel"><div class="toolbar"><div><h2>Учётные записи</h2><p class="muted">Менеджер ИИ-помощника редактирует базу знаний и отвечает клиентам в диалогах.</p></div><button type="button" class="button primary" data-action="users-new">＋ Добавить пользователя</button></div><ul class="admin-users-list">'+rows+'</ul></section>';
+  }
+  function openUserEditor(id) {
+    if (!isAdmin()) return;
+    const user=id?state.users?.find(entry=>entry.id===id):null;
+    if (id && !user) return;
+    const self=user?.id===state.user.id;
+    const form=$("#user-form");
+    form.reset();
+    form.dataset.userId=id||"";
+    $("#user-editor-title").textContent=user?"Изменить пользователя":"Добавить пользователя";
+    form.elements.username.value=user?.username||"";
+    form.elements.role.value=user?.role||"assistant_manager";
+    form.elements.role.disabled=self;
+    form.elements.access.value=user?.disabled?"disabled":"active";
+    form.elements.access.disabled=self||!user;
+    $("#user-access-field").hidden=!user;
+    form.elements.password.required=!user;
+    form.elements.password.disabled=self;
+    $("#user-password-field").hidden=self;
+    $("#user-password-hint").textContent=user?"Не менее 12 символов. Оставьте поле пустым, чтобы сохранить текущий пароль.":"Не менее 12 символов.";
+    $("#user-editor-error").hidden=true;
+    $("#user-editor-dialog").showModal();
+  }
+  async function saveUser(form) {
+    if (!isAdmin() || !form.reportValidity()) return;
+    const id=form.dataset.userId;
+    const fields=new FormData(form);
+    const payload={username:String(fields.get("username")).trim()};
+    if (fields.has("role")) payload.role=fields.get("role");
+    if (id && fields.has("access")) payload.disabled=fields.get("access")==="disabled";
+    if (fields.get("password")) payload.password=fields.get("password");
+    const submit=form.querySelector('button[type="submit"]');
+    const message=$("#user-editor-error");
+    message.hidden=true;
+    submit.disabled=true;
+    try {
+      const {user}=await api(id?"/api/admin/users/"+encodeURIComponent(id):"/api/admin/users",{
+        method:id?"PATCH":"POST",body:payload
+      });
+      if (user.id===state.user?.id) {
+        state.user=user;
+        $("#account-name").textContent=user.username;
+      }
+      $("#user-editor-dialog").close();
+      await loadUsers();
+      toast(id?"Настройки пользователя сохранены.":"Пользователь добавлен.");
+    } catch(error) {
+      message.textContent=error.message;
+      message.hidden=false;
+    } finally {
+      submit.disabled=false;
+    }
+  }
   function ensureAssistant() {
+    if (isManager()) return state.content.assistant;
     const defaults={enabled:true,title:{ru:"Помощник SAEL",kg:"SAEL жардамчысы",en:"SAEL assistant"},welcome:{ru:"Здравствуйте! Чем можем помочь?",kg:"Саламатсызбы! Кантип жардам бере алабыз?",en:"Hello! How can we help?"},instructions:"",hours:{timezone:"Asia/Bishkek",weekdays:[1,2,3,4,5],start:"08:00",end:"17:00"},handoffEmail:"sael.karabalta@saelglobal.com",knowledge:[]};
     const value=state.content.assistant||{};
     state.content.assistant={...defaults,...value,hours:{...defaults.hours,...(value.hours||{})},knowledge:Array.isArray(value.knowledge)?value.knowledge:[]};
     return state.content.assistant;
   }
   function assistantTabs(active) {
+    if (isManager()) return "";
     return '<div class="tabs assistant-tabs"><button type="button" data-action="navigate" data-view="assistant" class="'+(active==="settings"?"active":"")+'">Настройки помощника</button><button type="button" data-action="navigate" data-view="assistantKnowledge" class="'+(active==="knowledge"?"active":"")+'">База знаний и обучение</button><button type="button" data-action="navigate" data-view="assistantInbox">Диалоги с клиентами ↗</button></div>';
   }
   function assistantTextarea(value,path,label,hint,rows) {
@@ -377,7 +490,7 @@
   }
   function assistantEditor() {
     const a=ensureAssistant(),days=[[1,"Пн"],[2,"Вт"],[3,"Ср"],[4,"Чт"],[5,"Пт"],[6,"Сб"],[0,"Вс"]];
-    return assistantTabs("settings")+'<div class="toolbar"><p class="toolbar-note">Помогайте посетителям выбрать услугу и передавайте сложные вопросы специалисту.</p>'+languageSwitch()+'</div><div class="assistant-settings-grid"><div><section class="editor-card"><h2>Помощник на сайте</h2>'+field(a.enabled,["assistant","enabled"],"Показывать помощника посетителям",0)+field(a.title,["assistant","title"],"Название помощника",0)+assistantTextarea(a.welcome[state.lang]||"",["assistant","welcome",state.lang],"Первое сообщение · "+state.lang.toUpperCase(),"Приветствие, которое посетитель увидит при открытии чата.",3)+'</section><section class="editor-card"><h2>Правила общения</h2>'+assistantTextarea(a.instructions,["assistant","instructions"],"Как отвечать клиентам","Опишите желаемый тон общения, порядок уточняющих вопросов и ситуации, в которых нужно пригласить специалиста.",7)+'<div class="assistant-note">Услуги, цены и FAQ берутся из материалов сайта. Дополнительные утверждённые ответы добавляются в базу знаний.</div><button type="button" class="button" data-action="navigate" data-view="assistantKnowledge">Открыть базу знаний →</button></section></div><aside><section class="editor-card"><h2>Подключение ИИ</h2><div id="assistant-config-status" role="status"><p class="muted">Проверяем настройки сервера…</p></div><button type="button" class="text-button" data-action="assistant-refresh-config">Проверить состояние</button></section><section class="editor-card"><h2>Рабочее время специалистов</h2><p class="editor-help">В эти часы чат может предложить живое общение, если оператор включил приём обращений в разделе «Диалоги».</p><div class="assistant-weekdays" role="group" aria-label="Рабочие дни">'+days.map(([day,name])=>'<label><input type="checkbox" data-assistant-day="'+day+'" '+(a.hours.weekdays.includes(day)?"checked":"")+'><span>'+name+'</span></label>').join("")+'</div><div class="assistant-hours"><label>С<input type="time" data-path="'+pathAttr(["assistant","hours","start"])+'" value="'+esc(a.hours.start)+'"></label><label>До<input type="time" data-path="'+pathAttr(["assistant","hours","end"])+'" value="'+esc(a.hours.end)+'"></label></div><label>Часовой пояс<input type="text" data-path="'+pathAttr(["assistant","hours","timezone"])+'" value="'+esc(a.hours.timezone)+'" placeholder="Asia/Bishkek"></label><label>Почта для обращений<input type="email" data-path="'+pathAttr(["assistant","handoffEmail"])+'" value="'+esc(a.handoffEmail)+'"></label></section><section class="editor-card"><h3>Передача специалисту</h3><p class="editor-help">В рабочее время подключённый оператор увидит запрос в диалогах. Если специалист недоступен, посетитель сможет оставить контакты для ответа.</p><button type="button" class="button" data-action="navigate" data-view="assistantInbox">Открыть диалоги</button></section></aside></div>';
+    return assistantTabs("settings")+'<div class="toolbar"><p class="toolbar-note">Помогайте посетителям выбрать услугу и передавайте сложные вопросы специалисту.</p>'+languageSwitch()+'</div><div class="assistant-settings-grid"><div><section class="editor-card"><h2>Помощник на сайте</h2>'+field(a.enabled,["assistant","enabled"],"Показывать помощника посетителям",0)+field(a.title,["assistant","title"],"Название помощника",0)+field(a.avatar??"",["assistant","avatar"],labelFor("avatar"),0)+'<p class="editor-help">Выберите JPG, PNG или WebP в медиатеке. Пустое поле возвращает стандартный портрет.</p>'+assistantTextarea(a.welcome[state.lang]||"",["assistant","welcome",state.lang],"Первое сообщение · "+state.lang.toUpperCase(),"Приветствие, которое посетитель увидит при открытии чата.",3)+'</section><section class="editor-card"><h2>Правила общения</h2>'+assistantTextarea(a.instructions,["assistant","instructions"],"Как отвечать клиентам","Опишите желаемый тон общения, порядок уточняющих вопросов и ситуации, в которых нужно пригласить специалиста.",7)+'<div class="assistant-note">Услуги, цены и FAQ берутся из материалов сайта. Дополнительные утверждённые ответы добавляются в базу знаний.</div><button type="button" class="button" data-action="navigate" data-view="assistantKnowledge">Открыть базу знаний →</button></section></div><aside><section class="editor-card"><h2>Подключение ИИ</h2><div id="assistant-config-status" role="status"><p class="muted">Проверяем настройки сервера…</p></div><button type="button" class="text-button" data-action="assistant-refresh-config">Проверить состояние</button></section><section class="editor-card"><h2>Рабочее время специалистов</h2><p class="editor-help">В эти часы чат может предложить живое общение, если оператор включил приём обращений в разделе «Диалоги».</p><div class="assistant-weekdays" role="group" aria-label="Рабочие дни">'+days.map(([day,name])=>'<label><input type="checkbox" data-assistant-day="'+day+'" '+(a.hours.weekdays.includes(day)?"checked":"")+'><span>'+name+'</span></label>').join("")+'</div><div class="assistant-hours"><label>С<input type="time" data-path="'+pathAttr(["assistant","hours","start"])+'" value="'+esc(a.hours.start)+'"></label><label>До<input type="time" data-path="'+pathAttr(["assistant","hours","end"])+'" value="'+esc(a.hours.end)+'"></label></div><label>Часовой пояс<input type="text" data-path="'+pathAttr(["assistant","hours","timezone"])+'" value="'+esc(a.hours.timezone)+'" placeholder="Asia/Bishkek"></label><label>Почта для обращений<input type="email" data-path="'+pathAttr(["assistant","handoffEmail"])+'" value="'+esc(a.handoffEmail)+'"></label></section><section class="editor-card"><h3>Передача специалисту</h3><p class="editor-help">В рабочее время подключённый оператор увидит запрос в диалогах. Если специалист недоступен, посетитель сможет оставить контакты для ответа.</p><button type="button" class="button" data-action="navigate" data-view="assistantInbox">Открыть диалоги</button></section></aside></div>';
   }
   async function refreshAssistantConfig() {
     const target=$("#assistant-config-status");
@@ -498,7 +611,8 @@
     const host=$("#operator-conversation");if(!host||state.inboxSelectedId!==conversation.id)return;
     const previous=$("#operator-reply"),focused=document.activeElement===previous,selection=focused?[previous.selectionStart,previous.selectionEnd]:null,messages=$("#operator-messages"),nearBottom=!messages||messages.scrollHeight-messages.scrollTop-messages.clientHeight<80,oldScroll=messages?.scrollTop||0;
     const contact=conversation.contact||{},own=operatorOwns(conversation),closed=conversation.status==="closed",assigned=conversation.assignedName||"",draft=state.inboxDrafts?.[conversation.id]||"";
-    host.innerHTML='<header class="operator-conversation-header"><div><p class="eyebrow">ДИАЛОГ № '+esc(String(conversation.id).slice(-8))+' · '+esc((conversation.locale||"ru").toUpperCase())+'</p><h3>'+esc(contact.name||"Посетитель сайта")+'</h3><span class="operator-status operator-status-'+esc(conversation.status)+'">'+esc(conversationStatus(conversation.status))+'</span>'+(assigned?'<p class="operator-assigned">Специалист: '+esc(assigned)+'</p>':"")+'</div><div class="operator-conversation-actions">'+(!closed&&conversation.status!=="active"?'<button type="button" class="button primary small" data-action="operator-claim" data-id="'+esc(conversation.id)+'">Принять диалог</button>':"")+(!closed?'<button type="button" class="button small" data-action="operator-close" data-id="'+esc(conversation.id)+'">Завершить</button>':"")+'</div></header><div class="operator-contact-card">'+(contact.name||contact.phone||contact.email?'<span><small>Контактное лицо</small><strong>'+esc(contact.name||"Не указано")+'</strong></span><span><small>Телефон</small><strong>'+esc(contact.phone||"Не указан")+'</strong></span><span><small>Email</small><strong>'+esc(contact.email||"Не указан")+'</strong></span>':'<p>Контакты ещё не оставлены. Они появятся здесь после согласия посетителя.</p>')+'</div><div id="operator-messages" class="operator-messages" role="log" aria-label="История диалога" aria-live="polite">'+(conversation.messages||[]).map(message=>operatorMessage(message,contact)).join("")+'</div><form id="operator-reply-form" class="operator-reply-form" data-conversation-id="'+esc(conversation.id)+'"><label for="operator-reply">Ответ специалиста</label><textarea id="operator-reply" data-conversation-id="'+esc(conversation.id)+'" rows="3" maxlength="1500" placeholder="'+(own?"Напишите ответ клиенту…":closed?"Этот диалог завершён.":"Сначала примите диалог, чтобы ответить.")+'" '+(!own||state.operatorSendingId===conversation.id?"disabled":"")+'>'+esc(draft)+'</textarea><div class="operator-reply-bottom"><p>'+(own?"Ответ будет отправлен посетителю от имени специалиста SAEL.":closed?"История сохранена для просмотра.":conversation.status==="active"?"Диалог уже принят другим специалистом.":"Нажмите «Принять диалог», чтобы подключиться к разговору.")+'</p><button type="submit" class="button primary small" '+(!own||state.operatorSendingId===conversation.id?"disabled":"")+'>'+(state.operatorSendingId===conversation.id?"Отправляем…":"Отправить ответ")+" →"+'</button></div><p id="operator-reply-error" class="operator-inline-error" role="alert" hidden></p></form>';
+    const canClose=!closed&&(!isManager()||!conversation.assignedTo||conversation.assignedTo===state.user?.id);
+    host.innerHTML='<header class="operator-conversation-header"><div><p class="eyebrow">ДИАЛОГ № '+esc(String(conversation.id).slice(-8))+' · '+esc((conversation.locale||"ru").toUpperCase())+'</p><h3>'+esc(contact.name||"Посетитель сайта")+'</h3><span class="operator-status operator-status-'+esc(conversation.status)+'">'+esc(conversationStatus(conversation.status))+'</span>'+(assigned?'<p class="operator-assigned">Специалист: '+esc(assigned)+'</p>':"")+'</div><div class="operator-conversation-actions">'+(!closed&&conversation.status!=="active"?'<button type="button" class="button primary small" data-action="operator-claim" data-id="'+esc(conversation.id)+'">Принять диалог</button>':"")+(canClose?'<button type="button" class="button small" data-action="operator-close" data-id="'+esc(conversation.id)+'">Завершить</button>':"")+'</div></header><div class="operator-contact-card">'+(contact.name||contact.phone||contact.email?'<span><small>Контактное лицо</small><strong>'+esc(contact.name||"Не указано")+'</strong></span><span><small>Телефон</small><strong>'+esc(contact.phone||"Не указан")+'</strong></span><span><small>Email</small><strong>'+esc(contact.email||"Не указан")+'</strong></span>':'<p>Контакты ещё не оставлены. Они появятся здесь после согласия посетителя.</p>')+'</div><div id="operator-messages" class="operator-messages" role="log" aria-label="История диалога" aria-live="polite">'+(conversation.messages||[]).map(message=>operatorMessage(message,contact)).join("")+'</div><form id="operator-reply-form" class="operator-reply-form" data-conversation-id="'+esc(conversation.id)+'"><label for="operator-reply">Ответ специалиста</label><textarea id="operator-reply" data-conversation-id="'+esc(conversation.id)+'" rows="3" maxlength="1500" placeholder="'+(own?"Напишите ответ клиенту…":closed?"Этот диалог завершён.":"Сначала примите диалог, чтобы ответить.")+'" '+(!own||state.operatorSendingId===conversation.id?"disabled":"")+'>'+esc(draft)+'</textarea><div class="operator-reply-bottom"><p>'+(own?"Ответ будет отправлен посетителю от имени специалиста SAEL.":closed?"История сохранена для просмотра.":conversation.status==="active"?"Диалог уже принят другим специалистом.":"Нажмите «Принять диалог», чтобы подключиться к разговору.")+'</p><button type="submit" class="button primary small" '+(!own||state.operatorSendingId===conversation.id?"disabled":"")+'>'+(state.operatorSendingId===conversation.id?"Отправляем…":"Отправить ответ")+" →"+'</button></div><p id="operator-reply-error" class="operator-inline-error" role="alert" hidden></p></form>';
     const nextMessages=$("#operator-messages");if(nextMessages)nextMessages.scrollTop=nearBottom?nextMessages.scrollHeight:oldScroll;
     if(focused&&own){const input=$("#operator-reply");input.focus();if(selection)input.setSelectionRange(...selection);}
   }
@@ -534,6 +648,9 @@
     const action=button.dataset.action,index=Number(button.dataset.index),path=button.dataset.path?JSON.parse(button.dataset.path):null;
     if(state.restoring){toast("Дождитесь завершения восстановления.");return;}
     if(action==="navigate")return navigate(button.dataset.view);
+    if(action==="users-new")return openUserEditor();
+    if(action==="users-edit")return openUserEditor(button.dataset.id);
+    if(action==="users-refresh")return loadUsers();
     if(action==="assistant-refresh-config")return refreshAssistantConfig();
     if(action==="operator-refresh")return refreshInbox(state.inboxEpoch);
     if(action==="operator-select")return selectConversation(button.dataset.id);
@@ -659,7 +776,11 @@
     if(Object.hasOwn(input.dataset,"mediaUpload"))upload(input.files[0],input.dataset.mediaUpload==="dialog",input).catch(error=>toast(error.message,true));
   });
   $("#save-button").addEventListener("click",save);
-  document.addEventListener("submit",event=>{if(event.target.id==="operator-reply-form"){event.preventDefault();sendOperatorReply(event.target).catch(error=>toast(error.message,true));}});
+  document.addEventListener("submit",event=>{
+    if(event.target.id==="operator-reply-form"){event.preventDefault();sendOperatorReply(event.target).catch(error=>toast(error.message,true));}
+    if(event.target.id==="user-form"){event.preventDefault();saveUser(event.target);}
+  });
+  $("#user-editor-dialog").addEventListener("close",()=>$("#user-form").reset());
   document.addEventListener("visibilitychange",()=>{if(state.view!=="assistantInbox")return;if(document.visibilityState==="hidden")stopOperatorRuntime(true);else startOperatorRuntime();});
   window.addEventListener("pagehide",()=>stopOperatorRuntime(false,{keepalive:true}));
   $("#sidebar-toggle").addEventListener("click",()=>{const open=!document.body.classList.contains("sidebar-open");document.body.classList.toggle("sidebar-open",open);$("#sidebar-shade").hidden=!open;$("#sidebar-toggle").setAttribute("aria-expanded",String(open));$(".admin-main").inert=open;if(open)$("#admin-sidebar a")?.focus();});
@@ -689,7 +810,7 @@
   document.addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="s"&&state.content){event.preventDefault();save();}if(event.key==="Escape")closeSidebar();});
   window.addEventListener("beforeunload",event=>{if(state.dirty){event.preventDefault();event.returnValue="";}});
   window.addEventListener("resize",()=>{if(window.innerWidth>760)closeSidebar();});
-  async function boot(){try{const session=await api("/api/admin/session");if(session.authenticated)await enterApp(session);else showAuth(session);}catch(error){$("#boot-screen").innerHTML='<span class="brand-mark"><img src="/assets/sael-logo-mark.png" alt="SAEL"></span><p>'+esc(error.message)+'</p><p>Проверьте, что сайт запущен через server.js, затем обновите страницу.</p>';}}
+  async function boot(){try{const session=await api("/api/admin/session");if(session.authenticated)await enterApp(session);else showAuth(session);}catch(error){$("#boot-screen").innerHTML='<span class="brand-mark"><img src="/assets/sael-logo-mark.svg" alt="SAEL"></span><p>'+esc(error.message)+'</p><p>Проверьте, что сайт запущен через server.js, затем обновите страницу.</p>';}}
   boot();
 })();
 

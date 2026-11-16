@@ -8,3 +8,22 @@
 
 .security-panel{border-top:1px solid var(--line);background:#fafbfc}.security-panel h3{font-size:16px}.security-panel .inline-notice{margin-top:20px}.security-panel .inline-notice input{font-family:monospace;font-size:13px}.account-dialog{overflow:auto}.account-dialog .dialog-content{max-height:none}.editor-aside .editor-card .editor-field{margin-bottom:15px}
 .stat-card span span{display:inline;margin:0}.toolbar .search-input{min-width:0}
+
+.admin-users-list { padding: 0; margin: 8px 0 0; list-style: none; }
+.admin-user-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(170px, .75fr) auto;
+  gap: 12px 20px;
+  align-items: center;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.admin-user-name { overflow-wrap: anywhere; }
+.admin-user-name small { display: block; color: var(--muted); }
+.admin-user-details { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+#account-name { overflow-wrap: anywhere; }
+@media (max-width: 580px) {
+  .admin-user-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .admin-user-details { grid-row: 2; grid-column: 1 / -1; }
+  #user-form input, #user-form select { font-size: 16px; }
+}

@@ -123,6 +123,89 @@ test("setup disabled without bootstrap secret and auth requests rate-limited", a
   response = await f.request("/api/admin/login", "POST", { username: "admin", password: "invalid" }); assert.equal(response.status, 429); assert.equal(response.headers.get("retry-after"), "900");
 });
 
+test("email accounts and assistant managers have scoped access; deactivation and resets revoke their sessions", async t => {
+  const f = await fixture(t);
+  const adminPassword = "Admin-test-only-53", initialPassword = "Manager-test-only-30";
+  let response = await f.request("/api/admin/setup", "POST", {
+    token: process.env.CMS_SETUP_TOKEN, username: "  OWNER@EXAMPLE.TEST  ", password: adminPassword
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.json.user.username, "owner@example.test");
+  f.loginResponse(response);
+  const admin = { cookie: f.cookie, csrf: f.csrf }, adminId = response.json.user.id;
+  assert.equal((await f.request("/api/admin/users/" + adminId, "PATCH", { disabled: true })).json.error, "last_admin");
+  response = await f.request("/api/admin/users/" + adminId, "PATCH", { username: "updated@example.test" });
+  assert.equal(response.status, 200);
+  assert.equal((await f.request("/api/admin/session")).json.user.username, "updated@example.test");
+
+  const original = (await f.request("/api/admin/content")).json;
+  const fullConfig = clone(original.content.assistant);
+  const creation = { username: "merch@example.test", password: initialPassword, role: "assistant_manager" };
+  response = await f.request("/api/admin/users", "POST", creation, { "X-CSRF-Token": "stale" });
+  assert.equal(response.status, 403);
+  response = await f.request("/api/admin/users", "POST", creation);
+  assert.equal(response.status, 201);
+  const manageUrl = "/api/admin/users/" + response.json.user.id;
+  assert.equal(response.json.user.role, "assistant_manager");
+  assert.equal(response.json.user.disabled, false);
+  const userList = await f.request("/api/admin/users");
+  assert.equal(userList.json.users.length, 2);
+  assert(!userList.text.includes("password"));
+  assert(!userList.text.includes("totpSecret"));
+  assert.equal((await f.request("/api/admin/users", "POST", { ...creation, username: "MERCH@EXAMPLE.TEST" })).json.error, "username_taken");
+
+  response = await f.request("/api/admin/login", "POST", { username: "MERCH@EXAMPLE.TEST", password: initialPassword });
+  assert.equal(response.status, 200);
+  f.loginResponse(response);
+  const manager = { cookie: f.cookie, csrf: f.csrf };
+  assert.equal((await f.cms.authorizeAdmin({ headers: { cookie: manager.cookie } }, false)).role, "assistant_manager");
+  assert.equal((await f.request("/api/admin/session")).json.user.role, "assistant_manager");
+  for (const endpoint of ["/api/admin/users", "/api/admin/media", "/api/admin/backups"]) {
+    assert.equal((await f.request(endpoint)).status, 403, endpoint);
+  }
+  assert.equal((await f.request(manageUrl, "PATCH", { role: "admin" })).status, 403);
+  const restricted = await f.request("/api/admin/content");
+  assert.deepEqual(restricted.json.content, { assistant: { knowledge: fullConfig.knowledge } });
+  assert.equal((await f.request("/api/admin/content", "PUT", original)).status, 403);
+  assert.equal((await f.request("/api/admin/content", "PUT", {
+    content: { assistant: { knowledge: [], enabled: false } }, revision: restricted.json.revision
+  })).status, 403);
+  const article = { id: "samples", status: "published", tags: "volumes", title: translated("Sample volumes"), text: translated("Check the service page") };
+  restricted.json.content.assistant.knowledge.push(article);
+  response = await f.request("/api/admin/content", "PUT", restricted.json);
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.json.content.assistant.knowledge.at(-1), article);
+  assert.equal((await f.request("/api/admin/content", "PUT", restricted.json)).status, 409);
+  Object.assign(f, admin);
+  const updated = (await f.request("/api/admin/content")).json.content;
+  assert.deepEqual(updated, { ...original.content, assistant: { ...fullConfig, knowledge: response.json.content.assistant.knowledge } });
+
+  const nextPassword = "Updated-test-only-70";
+  response = await f.request(manageUrl, "PATCH", { password: nextPassword });
+  assert.equal(response.status, 200);
+  Object.assign(f, manager);
+  assert.equal((await f.request("/api/admin/content")).status, 401);
+  assert.equal((await f.request("/api/admin/login", "POST", { username: "merch@example.test", password: initialPassword })).status, 401);
+  f.loginResponse(await f.request("/api/admin/login", "POST", { username: "merch@example.test", password: nextPassword }));
+  const newManagerSession = { cookie: f.cookie, csrf: f.csrf };
+  Object.assign(f, admin);
+  assert.equal((await f.request(manageUrl, "PATCH", { disabled: true })).json.user.disabled, true);
+  Object.assign(f, newManagerSession);
+  assert.equal((await f.request("/api/admin/content")).status, 401);
+  await assert.rejects(f.cms.authorizeAdmin({ headers: { cookie: f.cookie } }, false), /unauthorized/);
+  assert.equal((await f.request("/api/admin/login", "POST", { username: "merch@example.test", password: nextPassword })).status, 401);
+  Object.assign(f, admin);
+  assert.equal((await f.request(manageUrl, "PATCH", { disabled: false })).json.user.disabled, false);
+  f.loginResponse(await f.request("/api/admin/login", "POST", { username: "merch@example.test", password: nextPassword }));
+  assert.equal((await f.request("/api/admin/password", "POST", { currentPassword: nextPassword, newPassword: "Self-service-only-36" })).status, 200);
+  assert.equal((await f.request("/api/admin/session")).json.authenticated, false);
+  Object.assign(f, admin);
+  assert.equal((await f.request("/api/admin/session")).json.authenticated, true);
+  const audit = await fs.readFile(path.join(f.cms.dataDir, "audit.jsonl"), "utf8");
+  assert.match(audit, /assistant_knowledge_saved/);
+  assert(!audit.includes(nextPassword));
+});
+
 test("simultaneous stale writes produce one save and one conflict", async t => {
   const f = await fixture(t); let response = await f.request("/api/admin/setup", "POST", { token: process.env.CMS_SETUP_TOKEN, username: "admin", password: "This-is-test-Password-42" }); f.loginResponse(response);
   const snapshot = (await f.request("/api/admin/content")).json, one = clone(snapshot), two = clone(snapshot); one.content.settings.siteName = "One"; two.content.settings.siteName = "Two";

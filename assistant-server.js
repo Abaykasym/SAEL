@@ -5,6 +5,7 @@ const fsp = fs.promises;
 const path = require("node:path");
 const crypto = require("node:crypto");
 const net = require("node:net");
+const { siteImagePath } = require("./site-assets");
 const ID = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
 const MAX_MESSAGES = 80;
 const BODY_LIMIT = 8192;
@@ -98,7 +99,16 @@ function createAssistant(options) {
   async function presence() { const state = await read(presenceFile, []); if (!Array.isArray(state)) fail(503, "store_unavailable"); return state.filter(item => item.expiresAt > time()); }
   async function settings() {
     const snapshot = await options.getContent(), content = snapshot.content || snapshot, source = content.assistant || {};
-    return { content, config: { enabled: source.enabled === true, title: translated(source.title, { ru: "Помощник SAEL", kg: "SAEL жардамчысы", en: "SAEL assistant" }, 200), welcome: translated(source.welcome, Object.fromEntries(Object.entries(TEXT).map(([lang, value]) => [lang, value.welcome]))), hours: normalizeHours(source.hours), phone: plain(content.settings?.phone, 80), email: plain(content.settings?.email || source.handoffEmail, 254) } };
+    const config = {
+      enabled: source.enabled === true,
+      title: translated(source.title, { ru: "Помощник SAEL", kg: "SAEL жардамчысы", en: "SAEL assistant" }, 200),
+      welcome: translated(source.welcome, Object.fromEntries(Object.entries(TEXT).map(([lang, value]) => [lang, value.welcome]))),
+      avatar: siteImagePath(source.avatar),
+      hours: normalizeHours(source.hours),
+      phone: plain(content.settings?.phone, 80),
+      email: plain(content.settings?.email, 254),
+    };
+    return { content, config };
   }
   async function availability(config, staffId) {
     const list = await presence(), isWorkingHours = workingHours(config.hours, new Date(time())), mine = staffId ? list.find(item => item.id === staffId && item.online) : null;
@@ -170,7 +180,17 @@ function createAssistant(options) {
   async function admin(req, write) {
     if (typeof options.authorizeAdmin !== "function") fail(401, "unauthorized");
     const value = await options.authorizeAdmin(req, write), user = value?.user || value;
-    if (!user?.id) fail(401, "unauthorized"); return user;
+    if (!user?.id) fail(401, "unauthorized");
+    if (!["admin", "assistant_manager"].includes(user.role)) fail(403, "forbidden_role");
+    return user;
+  }
+  function visibleToOperator(conversation, user) {
+    return user.role === "admin" || !!(conversation.handoffConsentAt || (conversation.requestedAt && conversation.contact?.consentAt));
+  }
+  function findForOperator(state, id, user) {
+    const conversation = find(state, id);
+    if (!visibleToOperator(conversation, user)) fail(404, "not_found");
+    return conversation;
   }
   async function handle(req, res, pathname) {
     const publicPath = pathname.startsWith("/api/assistant/"), adminPath = pathname.startsWith("/api/admin/assistant/");
@@ -257,18 +277,21 @@ function createAssistant(options) {
         }
         if (pathname === "/api/admin/assistant/conversations") {
           if (req.method !== "GET") fail(405, "method_not_allowed");
-          const conversations = await withStore(state => state.conversations.map(item => { const result = view(item, available, true); result.messageCount = result.messages.length; result.lastMessage = result.messages.at(-1) || null; delete result.messages; return result; }).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), false);
+          const conversations = await withStore(state => state.conversations
+            .filter(item => visibleToOperator(item, user))
+            .map(item => { const result = view(item, available, true); result.messageCount = result.messages.length; result.lastMessage = result.messages.at(-1) || null; delete result.messages; return result; })
+            .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), false);
           json(res, 200, { conversations }); return true;
         }
         const match = pathname.match(new RegExp(`^/api/admin/assistant/conversations/(${ID})(?:/(claim|messages|close))?$`));
         if (match) {
           const [, id, action] = match;
-          if (!action) { if (req.method !== "GET") fail(405, "method_not_allowed"); const conversation = await withStore(state => clone(find(state, id)), false); json(res, 200, { conversation: view(conversation, available, true) }); return true; }
+          if (!action) { if (req.method !== "GET") fail(405, "method_not_allowed"); const conversation = await withStore(state => clone(findForOperator(state, id, user)), false); json(res, 200, { conversation: view(conversation, available, true) }); return true; }
           if (req.method !== "POST") fail(405, "method_not_allowed"); const input = await body(req);
           // Public availability follows office hours. A connected employee may voluntarily answer an existing request later.
           if (action !== "close" && !(await availability(config, user.id)).online) fail(409, "staff_unavailable");
           const conversation = await withStore(state => {
-            const current = find(state, id); if (current.status === "closed") fail(409, "conversation_closed");
+            const current = findForOperator(state, id, user); if (current.status === "closed") fail(409, "conversation_closed");
             if (action === "claim") {
               if (!["waiting", "callback", "active"].includes(current.status)) fail(409, "claim_required");
               if (current.assignedTo && current.assignedTo !== user.id) fail(409, "already_claimed");
@@ -278,7 +301,11 @@ function createAssistant(options) {
               if (current.status !== "active" || current.assignedTo !== user.id) fail(409, "claim_required");
               if (typeof input.text !== "string" || !input.text.trim() || input.text.length > 1500) fail(400, "text_required");
               append(current, "staff", input.text, { staffId: user.id, staffName: "Специалист SAEL" });
-            } else { current.status = "closed"; delete current.aiPending; if (current.messages.length < MAX_MESSAGES) append(current, "system", TEXT[current.locale].closed); }
+            } else {
+              if (user.role === "assistant_manager" && current.assignedTo && current.assignedTo !== user.id) fail(409, "already_claimed");
+              current.status = "closed"; delete current.aiPending;
+              if (current.messages.length < MAX_MESSAGES) append(current, "system", TEXT[current.locale].closed);
+            }
             return clone(current);
           });
           await audit("staff_" + action, id, user.id); json(res, 200, { conversation: view(conversation, await availability(config), true) }); return true;
