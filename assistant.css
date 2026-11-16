@@ -80,6 +80,18 @@
 .sael-assistant-bottom { flex: 0 0 auto; padding: 12px 16px 13px; border-top: 1px solid #dce0e2; background: #fff; }
 .sael-assistant-check { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 11px; color: #4c5257; font-size: 11px; line-height: 1.65; cursor: pointer; }
 .sael-assistant-check input { width: 17px; height: 17px; flex: 0 0 17px; margin: 1px 0 0; accent-color: #b80000; }
+.sael-assistant-message-consent.is-required { color: var(--sael-chat-red); margin-bottom: 4px; }
+.sael-assistant-message-consent.is-required input {
+  outline: 2px solid var(--sael-chat-red);
+  outline-offset: 2px;
+  animation: sael-consent-pulse .65s ease-out 3;
+}
+@keyframes sael-consent-pulse {
+  from { box-shadow: 0 0 0 2px rgb(184 0 0 / 45%); }
+  to { box-shadow: 0 0 0 8px rgb(184 0 0 / 0%); }
+}
+.sael-assistant-consent-hint { margin: 0; color: var(--sael-chat-red); font-size: 14px; font-weight: 650; }
+.sael-assistant-consent-hint:not(:empty) { margin-bottom: 10px; }
 .sael-assistant-compose { margin: 0; }
 .sael-assistant-input-label { display: block; margin-bottom: 5px; color: #4c5257; font-size: 11px; font-weight: 650; }
 .sael-assistant textarea { display: block; width: 100%; min-height: 65px; max-height: 140px; resize: vertical; margin: 0; padding: 10px 11px; border: 1px solid #767c81; border-radius: 7px; color: var(--sael-chat-ink); background: #fff; font-size: 14px; line-height: 1.55; }

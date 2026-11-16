@@ -146,12 +146,25 @@
     refs.welcome.textContent = localized(state.config?.welcome, t("welcome")); refs.welcome.hidden = hasConversation;
     refs.disclosure.textContent = state.config?.aiConfigured ? t("disclosureAi") : t("disclosureKnowledge"); refs.disclosure.hidden = hasConversation;
     refs.consentRow.hidden = hasConversation; refs.consentLabel.textContent = t("consent"); refs.consent.checked = state.consent;
+    const needsConsent = !hasConversation && !state.consent && state.errorKey === "consentRequired";
+    refs.consentRow.classList.toggle("is-required", needsConsent);
+    const consentHint = needsConsent ? t("consentRequired") : "";
+    if (refs.consentHint.textContent !== consentHint) refs.consentHint.textContent = consentHint;
+    if (needsConsent) {
+      refs.consent.setAttribute("aria-invalid", "true");
+      refs.consent.setAttribute("aria-describedby", refs.consentHint.id);
+    } else {
+      refs.consent.removeAttribute("aria-invalid");
+      refs.consent.removeAttribute("aria-describedby");
+    }
     refs.suggestions.hidden = hasConversation; refs.suggestions.setAttribute("aria-label", t("suggestLabel"));
     if (refs.suggestions.dataset.locale !== lang()) { refs.suggestions.dataset.locale = lang(); refs.suggestions.replaceChildren(); for (const question of t("suggestions")) { const suggestion = button("sael-assistant-suggestion", function () { refs.input.value = question; inputChanged(); refs.input.focus(); }); suggestion.textContent = question; refs.suggestions.append(suggestion); } }
     const status = statusText(); refs.status.textContent = status; refs.status.hidden = !status;
-    refs.error.textContent = state.errorText || (state.errorKey ? t(state.errorKey) : ""); refs.error.hidden = !refs.error.textContent;
+    refs.error.textContent = needsConsent ? "" : state.errorText || (state.errorKey ? t(state.errorKey) : "");
+    refs.error.hidden = !refs.error.textContent;
     refs.label.textContent = t("question"); refs.input.placeholder = t("placeholder"); refs.send.textContent = state.busy ? t("sending") : t("send");
-    refs.input.disabled = closed || state.restoring || state.creating || state.config?.enabled === false; refs.send.disabled = state.busy || state.creating || state.restoring || closed || state.config?.enabled === false || (!hasConversation && !state.consent) || !refs.input.value.trim();
+    refs.input.disabled = closed || state.restoring || state.creating || state.config?.enabled === false;
+    refs.send.disabled = state.busy || refs.input.disabled || !refs.input.value.trim();
     refs.compose.setAttribute("aria-busy", String(state.busy)); refs.counter.textContent = refs.input.value.length + " / " + MAX_TEXT; refs.note.textContent = t("note");
     refs.human.textContent = t("human"); refs.human.hidden = closed || ["active", "waiting"].includes(state.conversation?.status) && !state.conversation?.callbackSuggested && !(state.conversation?.status === "active" && state.conversation.staffConnected === false); refs.human.disabled = state.busy || state.creating || state.handoffBusy || state.restoring || state.config?.enabled === false;
     refs.end.textContent = t("end"); refs.end.hidden = !hasConversation || closed; refs.end.disabled = state.busy || state.handoffBusy || state.ending;
@@ -162,11 +175,21 @@
     refs.endConfirm.hidden = !state.endOpen; refs.endTitle.textContent = t("endTitle"); refs.endDescription.textContent = t("endDescription"); refs.endAccept.textContent = t("endConfirm"); refs.endAccept.disabled = state.ending; refs.endCancel.textContent = t("cancel");
     renderContacts(); renderMessages();
   }
-  function inputChanged() { state.errorKey = ""; state.errorText = ""; render(); }
+  function inputChanged() {
+    if (state.errorKey !== "consentRequired") state.errorKey = "";
+    state.errorText = "";
+    render();
+  }
+  function promptForConsent() {
+    state.errorKey = "consentRequired";
+    state.errorText = "";
+    render();
+    refs.consent.focus();
+  }
   async function ensureConversation() {
     if (state.id && state.token) return true;
     if (state.creation) return state.creation;
-    if (!state.consent) { state.errorKey = "consentRequired"; render(); refs.consent.focus(); return false; }
+    if (!state.consent) { promptForConsent(); return false; }
     const generation = state.generation; state.creating = true; render();
     state.creation = (async function () {
       try {
@@ -179,10 +202,10 @@
     return state.creation;
   }
   async function sendMessage() {
-    if (state.busy || state.restoring || state.conversation?.status === "closed") return;
+    if (state.busy || refs.input.disabled) return;
     const text = refs.input.value.trim();
     if (!text) { state.errorKey = "noQuestion"; render(); refs.input.focus(); return; }
-    if (!state.conversation && !state.consent) { state.errorKey = "consentRequired"; render(); refs.consent.focus(); return; }
+    if (!state.conversation && !state.consent) { promptForConsent(); return; }
     state.busy = true; state.errorKey = ""; state.errorText = ""; stopPolling(); render();
     try {
       if (!await ensureConversation()) return;
@@ -197,7 +220,7 @@
   }
   async function openHandoff() {
     if (state.busy || state.handoffBusy) return;
-    if (!state.id && !state.consent) { state.errorKey = "consentRequired"; render(); refs.consent.focus(); return; }
+    if (!state.id && !state.consent) { promptForConsent(); return; }
     state.errorKey = ""; state.errorText = "";
     try { if (!await ensureConversation()) return; state.handoffOpen = true; state.endOpen = false; render(); refs.name.focus(); }
     catch (error) { state.errorKey = errorFor(error); render(); }
@@ -271,12 +294,19 @@
     const handoffButtons = node("div", "sael-assistant-form-actions"); refs.handoffSend = node("button", "sael-assistant-primary"); refs.handoffSend.type = "submit"; refs.handoffCancel = button("sael-assistant-secondary", function () { state.handoffOpen = false; render(); refs.human.focus(); }); handoffButtons.append(refs.handoffSend, refs.handoffCancel); refs.handoffForm.append(handoffConsentRow, handoffButtons); refs.handoff.append(refs.handoffTitle, refs.handoffIntro, refs.handoffForm);
     refs.endConfirm = node("section", "sael-assistant-end-confirm"); refs.endConfirm.hidden = true; refs.endTitle = node("h3"); refs.endDescription = node("p"); const endButtons = node("div", "sael-assistant-form-actions"); refs.endAccept = button("sael-assistant-primary", endConversation); refs.endCancel = button("sael-assistant-secondary", function () { state.endOpen = false; render(); refs.end.focus(); }); endButtons.append(refs.endAccept, refs.endCancel); refs.endConfirm.append(refs.endTitle, refs.endDescription, endButtons);
     refs.contacts = node("div", "sael-assistant-contacts"); refs.scroll.append(meta, intro, refs.suggestions, refs.log, refs.status, refs.error, refs.handoff, refs.endConfirm, refs.contacts);
-    const bottom = node("div", "sael-assistant-bottom"); refs.consentRow = node("label", "sael-assistant-check sael-assistant-message-consent"); refs.consent = node("input"); refs.consent.type = "checkbox"; refs.consent.addEventListener("change", function () { state.consent = refs.consent.checked; state.errorKey = ""; render(); }); refs.consentLabel = node("span"); refs.consentRow.append(refs.consent, refs.consentLabel);
+    const bottom = node("div", "sael-assistant-bottom");
+    refs.consentRow = node("label", "sael-assistant-check sael-assistant-message-consent");
+    refs.consent = node("input"); refs.consent.type = "checkbox";
+    refs.consent.addEventListener("change", function () { state.consent = refs.consent.checked; state.errorKey = ""; render(); });
+    refs.consentLabel = node("span"); refs.consentRow.append(refs.consent, refs.consentLabel);
+    refs.consentHint = node("p", "sael-assistant-consent-hint");
+    refs.consentHint.id = "sael-assistant-consent-hint";
+    refs.consentHint.setAttribute("role", "alert");
     refs.compose = node("form", "sael-assistant-compose"); refs.compose.addEventListener("submit", function (event) { event.preventDefault(); sendMessage(); }); refs.label = node("label", "sael-assistant-input-label"); refs.label.htmlFor = "sael-assistant-input";
     refs.input = node("textarea"); refs.input.id = "sael-assistant-input"; refs.input.name = "message"; refs.input.rows = 2; refs.input.maxLength = MAX_TEXT; refs.input.addEventListener("input", inputChanged); refs.input.addEventListener("keydown", function (event) { if (event.key === "Enter" && !event.shiftKey && !event.isComposing) { event.preventDefault(); sendMessage(); } });
     const composeActions = node("div", "sael-assistant-compose-actions"); refs.counter = node("span", "sael-assistant-counter"); refs.counter.id = "sael-assistant-counter"; refs.input.setAttribute("aria-describedby", refs.counter.id); refs.send = node("button", "sael-assistant-primary"); refs.send.type = "submit"; composeActions.append(refs.counter, refs.send); refs.compose.append(refs.label, refs.input, composeActions);
     const actions = node("div", "sael-assistant-actions"); refs.human = button("sael-assistant-human", openHandoff); refs.end = button("sael-assistant-text-button", function () { state.endOpen = true; state.handoffOpen = false; render(); refs.endAccept.focus(); }); refs.newChat = button("sael-assistant-human", function () { clearConversation(); state.errorKey = ""; refs.input.value = ""; refs.name.value = ""; refs.email.value = ""; refs.phone.value = ""; refs.handoffConsent.checked = false; render(); refs.consent.focus(); }); actions.append(refs.human, refs.end, refs.newChat);
-    refs.note = node("p", "sael-assistant-note"); bottom.append(refs.consentRow, refs.compose, actions, refs.note); refs.panel.append(header, refs.scroll, bottom); refs.root.append(refs.launcher, refs.panel); document.body.append(refs.root);
+    refs.note = node("p", "sael-assistant-note"); bottom.append(refs.consentRow, refs.consentHint, refs.compose, actions, refs.note); refs.panel.append(header, refs.scroll, bottom); refs.root.append(refs.launcher, refs.panel); document.body.append(refs.root);
     refs.root.addEventListener("keydown", function (event) { if (event.key === "Escape" && state.open) { event.preventDefault(); event.stopPropagation(); closePanel(); } });
     document.addEventListener("visibilitychange", function () { if (document.hidden) stopPolling(); else if (state.open) { refreshConfig().then(refreshConversation).then(render).catch(function () {}).finally(schedulePoll); } });
     new MutationObserver(function (changes) { if (changes.some(change => change.attributeName === "lang")) { state.messageSignature = ""; render(); } }).observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
