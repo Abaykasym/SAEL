@@ -46,6 +46,7 @@ const PUBLIC_FILES = new Map([
   ["/assets/sael-logo-full.png", ["assets/sael-logo-full.png", "image/png"]],
   ["/assets/sael-logo-mark.png", ["assets/sael-logo-mark.png", "image/png"]],
   ["/assets/sael-professor.png", ["assets/sael-professor.png", "image/png"]],
+  ["/assets/sael-professor-kg.webp", ["assets/sael-professor-kg.webp", "image/webp"]],
   ["/assets/sael-video-poster.jpg", ["assets/sael-video-poster.jpg", "image/jpeg"]],
   ["/assets/source-sael/photos/sample-preparation.jpg", ["assets/source-sael/photos/sample-preparation.jpg", "image/jpeg"]],
   ["/assets/source-sael/photos/precious-metals.jpg", ["assets/source-sael/photos/precious-metals.jpg", "image/jpeg"]],

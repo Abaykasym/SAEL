@@ -242,12 +242,13 @@
     refs.launcher = button("sael-assistant-launcher", openPanel); refs.launcher.setAttribute("aria-controls", "sael-assistant-panel"); refs.launcher.setAttribute("aria-haspopup", "dialog");
     const professor = node("img", "sael-assistant-professor");
     professor.alt = "";
-    professor.width = 256;
-    professor.height = 256;
+    professor.width = 224;
+    professor.height = 224;
     professor.decoding = "async";
+    professor.fetchPriority = "low";
     professor.draggable = false;
     professor.addEventListener("error", () => { professor.hidden = true; });
-    professor.src = new URL("assets/sael-professor.png", document.baseURI).href;
+    professor.src = new URL("assets/sael-professor-kg.webp", document.baseURI).href;
     refs.launcherLabel = node("span", "sael-assistant-launcher-label");
     refs.launcher.append(professor, refs.launcherLabel);
     refs.panel = node("section", "sael-assistant-panel"); refs.panel.id = "sael-assistant-panel"; refs.panel.setAttribute("role", "dialog"); refs.panel.setAttribute("aria-modal", "false"); refs.panel.setAttribute("aria-labelledby", "sael-assistant-title"); refs.panel.hidden = true;
