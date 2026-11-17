@@ -123,6 +123,42 @@ test("setup disabled without bootstrap secret and auth requests rate-limited", a
   response = await f.request("/api/admin/login", "POST", { username: "admin", password: "invalid" }); assert.equal(response.status, 429); assert.equal(response.headers.get("retry-after"), "900");
 });
 
+test("host password reset affects only the selected administrator and keeps their second factor", async t => {
+  const f = await fixture(t);
+  const username = "owner@example.test";
+  const password = "Original-test-only-53";
+  const newPassword = "Recovered-test-only-70";
+  const manager = { username: "staff@example.test", password: "Manager-test-only-30", role: "assistant_manager" };
+  const ownerLogin = await f.request("/api/admin/setup", "POST", { token: process.env.CMS_SETUP_TOKEN, username, password });
+  assert.equal(ownerLogin.status, 200);
+  f.loginResponse(ownerLogin);
+  const ownerSession = { cookie: f.cookie, csrf: f.csrf };
+  assert.equal((await f.request("/api/admin/users", "POST", manager)).status, 201);
+  const originalContent = await f.cms.getContent();
+  const { secret } = (await f.request("/api/admin/totp/setup", "POST", { currentPassword: password })).json;
+  assert.equal((await f.request("/api/admin/totp/enable", "POST", { code: totp(secret) })).status, 200);
+  const managerLogin = await f.request("/api/admin/login", "POST", { username: manager.username, password: manager.password });
+  assert.equal(managerLogin.status, 200);
+  f.loginResponse(managerLogin);
+
+  assert.equal(f.cms.resetAdminPasswordFromHost, undefined);
+  const recovery = createCms({ root: f.folder, publicRoot: path.join(f.folder, "public"), seed: seed(), allowHostPasswordReset: true });
+  assert.deepEqual(await recovery.resetAdminPasswordFromHost(username, newPassword), { totpEnabled: true });
+  assert.deepEqual(await f.cms.getContent(), originalContent);
+  assert.equal((await f.request("/api/admin/session")).json.user.username, manager.username);
+
+  Object.assign(f, ownerSession);
+  assert.equal((await f.request("/api/admin/session")).json.authenticated, false);
+  const code = totp(secret, 1);
+  assert.equal((await f.request("/api/admin/login", "POST", { username, password, code })).status, 401);
+  assert.equal((await f.request("/api/admin/login", "POST", { username, password: newPassword })).status, 401);
+  const recovered = await f.request("/api/admin/login", "POST", { username, password: newPassword, code });
+  assert.equal(recovered.status, 200);
+  f.loginResponse(recovered);
+  const { users } = (await f.request("/api/admin/users")).json;
+  assert.deepEqual(users.map(user => user.username).sort(), [username, manager.username].sort());
+});
+
 test("email accounts and assistant managers have scoped access; deactivation and resets revoke their sessions", async t => {
   const f = await fixture(t);
   const adminPassword = "Admin-test-only-53", initialPassword = "Manager-test-only-30";

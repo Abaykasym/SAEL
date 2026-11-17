@@ -259,6 +259,22 @@ function createCms(options) {
     } catch { console.error("cms_audit_write_failed"); }
   }
   async function auth() { const state = await read(files.auth, { schemaVersion: 1, users: [], sessions: [] }); if (!Array.isArray(state.users) || !Array.isArray(state.sessions)) fail(503, "store_invalid"); return state; }
+  async function resetAdminPasswordFromHost(username, password) {
+    const login = usernameKey(normalizeUsername(username));
+    const encoded = await passwordHash(password);
+    return mutate(async () => {
+      const state = await auth();
+      const accounts = state.users.filter(user => usernameKey(user.username) === login);
+      const user = accounts.length === 1 ? accounts[0] : null;
+      if (!accountActive(user) || accountRole(user) !== "admin") fail(404, "user_not_found");
+      user.passwordHash = encoded;
+      delete user.totpPending;
+      state.sessions = state.sessions.filter(session => session.userId !== user.id);
+      await atomic(files.auth, state);
+      await audit("hosting", "password_reset_owner", { userId: user.id });
+      return { totpEnabled: !!user.totpSecret };
+    });
+  }
   function seedEnvelope() { const content = clone(typeof options.seed === "function" ? options.seed() : options.seed); validateContent(content); return { schemaVersion: 1, revision: 1, updatedAt: new Date().toISOString(), content }; }
   async function content() {
     await ready;
@@ -639,7 +655,11 @@ function createCms(options) {
       return true;
     }
   }
-  return { handle, dataDir, ready, getContent: content, validateContent, authorizeAdmin:async(req,write)=>userView((await session(req,!!write)).user) };
+  return {
+    handle, dataDir, ready, getContent: content, validateContent,
+    authorizeAdmin:async(req,write)=>userView((await session(req,!!write)).user),
+    ...(options.allowHostPasswordReset === true ? { resetAdminPasswordFromHost } : {})
+  };
 }
 
 module.exports = { createCms, validateContent, passwordHash, passwordMatches, CmsError };

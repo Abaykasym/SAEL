@@ -9,7 +9,7 @@ $buildRoot = Join-Path $outputRoot ('sael-cms-package-' + (Get-Date -Format 'yyy
 $appRoot = Join-Path $buildRoot 'sael-site'
 $publicRoot = Join-Path $appRoot 'public'
 New-Item -ItemType Directory -Path (Join-Path $publicRoot 'admin') -Force | Out-Null
-$privateFiles = @('server.js','site-assets.js','cms-server.js','cms-setup.js','cms-seed.json','assistant-server.js','assistant-ai.js','assistant-knowledge.js','assistant-config.js','package.json','package-lock.json','.env.example','README.md','DEPLOY_PLESK.md','RELEASE_CHECK.md','ADMIN_GUIDE.md','ASSISTANT_GUIDE.md')
+$privateFiles = @('server.js','site-assets.js','cms-server.js','cms-setup.js','cms-reset-password.js','cms-seed.json','assistant-server.js','assistant-ai.js','assistant-knowledge.js','assistant-config.js','package.json','package-lock.json','.env.example','README.md','DEPLOY_PLESK.md','RELEASE_CHECK.md','ADMIN_GUIDE.md','ASSISTANT_GUIDE.md')
 $publicFiles = @('index.html','about.html','service.html','page.html','styles.css','about.css','service-details.css','cms-public.css','app.js','about-content.js','service-content.js','price-translations.js','cms-client.js','assistant-client.js','assistant.css')
 foreach ($file in $privateFiles) { Copy-Item -LiteralPath (Join-Path $sourceRoot $file) -Destination (Join-Path $appRoot $file) }
 foreach ($file in $publicFiles) { Copy-Item -LiteralPath (Join-Path $sourceRoot $file) -Destination (Join-Path $publicRoot $file) }
