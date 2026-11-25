@@ -12,11 +12,12 @@
   <title>SAEL — независимая аналитическая лаборатория</title>
   <link rel="canonical" href="https://sael.kg/">
   <link rel="icon" type="image/svg+xml" href="assets/sael-logo-mark.svg">
-  <link rel="stylesheet" href="styles.css?v=mobile-readability">
+  <link rel="stylesheet" href="styles.css?v=quotation">
   <script defer src="price-translations.js"></script>
-  <link rel="stylesheet" href="cms-public.css?v=mobile-readability">
-  <script defer src="cms-client.js?v=branding"></script>
-  <script defer src="app.js?v=mobile-readability"></script>
+  <script defer src="quote-builder.js"></script>
+  <link rel="stylesheet" href="cms-public.css?v=cms-recovery">
+  <script defer src="cms-client.js?v=cms-recovery"></script>
+  <script defer src="app.js?v=quote-cms-recovery"></script>
   <link rel="preload" as="image" type="image/webp" href="assets/sael-professor-kg.webp" fetchpriority="low">
   <link rel="stylesheet" href="assistant.css?v=consent-feedback">
   <script defer src="assistant-client.js?v=branding"></script>
@@ -225,6 +226,7 @@
           <a class="button button-outline" href="https://sael.kg/cb/pricelist.pdf" target="_blank" rel="noopener"><span data-i18n="price.pdf">Скачать PDF</span><span aria-hidden="true">↓</span></a>
         </div>
         <p class="price-prompt" id="price-prompt" role="status" data-i18n="price.prompt">Выберите направление, чтобы увидеть услуги и цены.</p>
+        <a id="price-selection-link" class="price-selection-link" href="#request" hidden></a>
         <div id="price-results" hidden>
         <div class="table-wrap">
           <table class="price-table" role="table" aria-labelledby="price-heading">
@@ -289,33 +291,56 @@
           <a class="map-link" href="https://maps.google.com/?q=SAEL+Kara-Balta+Kalinina+2" target="_blank" rel="noopener"><span data-i18n="contact.map">Открыть карту</span><span aria-hidden="true">↗</span></a>
         </div>
         <div class="request-card" id="request">
-          <div class="request-card-head"><div><p class="eyebrow" data-i18n="form.eyebrow">Запросить расчёт</p><h3 data-i18n="form.title">Расскажите об образцах</h3></div><span class="form-mark">SAEL / 01</span></div>
+          <div class="request-card-head"><h3 data-i18n="rfq.title">Запрос коммерческого предложения</h3></div>
           <form id="request-form" action="/api/quote-request" method="post" enctype="multipart/form-data">
-            <div class="form-row">
-              <label><span data-i18n="form.company">Компания*</span><input name="company" required autocomplete="organization"></label>
-              <label><span data-i18n="form.person">Контактное лицо*</span><input name="person" required autocomplete="name"></label>
-            </div>
-            <div class="form-row">
-              <label><span>Email*</span><input type="email" name="email" required autocomplete="email"></label>
-              <label><span data-i18n="form.phone">Телефон*</span><input type="tel" name="phone" required autocomplete="tel"></label>
-            </div>
-            <div class="form-row">
-              <label><span data-i18n="form.country">Страна</span><input name="country" autocomplete="country-name"></label>
-              <label><span data-i18n="form.sampleCount">Количество образцов</span><input name="sample_count" inputmode="numeric"></label>
-            </div>
-            <label><span data-i18n="form.sampleType">Тип образцов</span><input name="sample_type" data-i18n-placeholder="form.samplePlaceholder" placeholder="Например, керн, руда, вода"></label>
-            <label><span data-i18n="form.research">Необходимые исследования</span><textarea name="research" rows="3" required></textarea></label>
-            <div class="form-row">
-              <label><span data-i18n="form.method">Предполагаемый метод</span><input name="method"></label>
-              <label><span data-i18n="form.deadline">Желаемый срок</span><input name="deadline"></label>
-            </div>
-            <label><span data-i18n="form.comment">Комментарий</span><textarea name="comment" rows="3"></textarea></label>
-            <label class="file-field" for="tech-assignment"><span data-i18n="form.attach">Техническое задание или исходные документы (PDF, XLS/XLSX, DOC/DOCX, ZIP)</span><input id="tech-assignment" type="file" name="technical_assignment" accept=".pdf,.xls,.xlsx,.doc,.docx,.zip" aria-describedby="tech-assignment-note"><small id="tech-assignment-note" data-i18n="form.fileNote">Предварительный лимит 10 МБ на файл; окончательное ограничение настроить на сервере.</small></label>
+            <fieldset class="quote-fields">
+              <legend data-i18n="rfq.analyses">Исследования и объём работ</legend>
+              <p class="quote-hint" id="quote-scope-hint" data-i18n="rfq.help">Выберите анализы и укажите объём для каждой позиции. Если метод ещё не выбран, опишите задачу или приложите ТЗ.</p>
+              <div class="quote-picker" id="quote-picker" hidden>
+                <div class="form-row">
+                  <label><span data-i18n="price.filter">Направление</span><select id="quote-category"></select></label>
+                  <label><span data-i18n="rfq.find">Поиск по названию или коду</span><input id="quote-search" type="search" data-i18n-placeholder="rfq.searchHint" placeholder="Золото, Au-ICP21"></label>
+                </div>
+                <div id="quote-matches" class="quote-matches" hidden></div>
+              </div>
+              <div class="quote-selection" id="quote-selection" hidden>
+                <h4 id="quote-selected-title"></h4>
+                <ul id="quote-lines" aria-labelledby="quote-selected-title"></ul>
+              </div>
+              <p class="sr-only" role="status" id="quote-announcement"></p>
+              <label><span data-i18n="rfq.description">Задача или исследования вне списка</span><textarea name="research" rows="2" maxlength="5000" aria-describedby="quote-scope-hint"></textarea></label>
+            </fieldset>
+            <fieldset class="quote-fields">
+              <legend data-i18n="rfq.conditions">Образцы и сроки</legend>
+              <div class="form-row">
+                <label><span data-i18n="form.sampleType">Тип образцов</span><input name="sample_type" maxlength="500" data-i18n-placeholder="form.samplePlaceholder" placeholder="Например, керн, руда, вода"></label>
+                <label><span data-i18n="rfq.sampleTotal">Всего образцов в партии</span><input name="sample_count" type="number" min="1" step="1" inputmode="numeric"></label>
+              </div>
+              <label><span data-i18n="form.method">Предполагаемый метод</span><input name="method" maxlength="500"></label>
+              <div class="form-row">
+                <label><span data-i18n="rfq.priority">Срочность</span><select name="urgency"><option value="standard" data-i18n="rfq.standard">В обычном порядке</option><option value="urgent" data-i18n="rfq.urgent">Требуется срочно</option></select></label>
+                <label><span data-i18n="rfq.date">Желаемая дата результата</span><input name="deadline" type="date"></label>
+              </div>
+              <p id="quote-urgent-hint" class="quote-hint" data-i18n="rfq.urgentHint" hidden>Специалист проверит возможность ускоренного анализа и укажет срок в предложении.</p>
+              <label><span data-i18n="rfq.wishes">Дополнительные пожелания</span><textarea name="comment" maxlength="3000" rows="2" data-i18n-placeholder="rfq.wishesHint" placeholder="Например, формат отчёта или особые условия передачи проб"></textarea></label>
+              <label class="file-field" for="tech-assignment"><span data-i18n="form.attach">Техническое задание или исходные документы (PDF, XLS/XLSX, DOC/DOCX, ZIP)</span><input id="tech-assignment" type="file" name="technical_assignment" accept=".pdf,.xls,.xlsx,.doc,.docx,.zip" aria-describedby="tech-assignment-note"><small id="tech-assignment-note" data-i18n="form.fileNote">До 10 МБ.</small></label>
+            </fieldset>
+            <fieldset class="quote-fields">
+              <legend data-i18n="rfq.contact">Кому направить предложение</legend>
+              <div class="form-row">
+                <label><span data-i18n="form.company">Компания*</span><input name="company" maxlength="200" required autocomplete="organization"></label>
+                <label><span data-i18n="form.person">Контактное лицо*</span><input name="person" maxlength="160" required autocomplete="name"></label>
+              </div>
+              <div class="form-row">
+                <label><span>Email*</span><input type="email" name="email" maxlength="254" required autocomplete="email"></label>
+                <label><span data-i18n="form.phone">Телефон*</span><input type="tel" name="phone" maxlength="80" required autocomplete="tel"></label>
+              </div>
+              <label><span data-i18n="form.country">Страна</span><input name="country" maxlength="100" autocomplete="country-name"></label>
+            </fieldset>
             <label class="consent"><input type="checkbox" name="consent" value="yes" required><span data-i18n="form.consent">Я согласен(на) на обработку данных для ответа на запрос.</span></label>
             <label class="hp-field" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
             <button class="button button-primary form-submit" type="submit"><span data-i18n="form.submit">Подготовить запрос</span><span aria-hidden="true">↗</span></button>
             <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
-            <p class="form-footnote" data-i18n="form.demo">Техническое задание будет отправлено специалисту SAEL для подготовки коммерческого предложения. Принимаются файлы до 10 МБ.</p>
           </form>
         </div>
       </div>

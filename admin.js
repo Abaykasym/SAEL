@@ -8,7 +8,7 @@
   const state = { content:null, revision:null, csrf:"", user:null, view:"overview", lang:"ru", item:null, menu:"header", sectionPage:"all", dirty:false, busy:false, query:"", copyGroup:"hero", media:[], mediaPath:null, setup:false, setupAvailable:false, totpSecret:null, totpUrl:null, pendingDraft:null };
   const nav = [
     ["overview","Обзор","◫","РАБОЧЕЕ ПРОСТРАНСТВО"],["pages","Страницы","▤"],["sections","Разделы страниц","▥"],["menus","Меню и навигация","☷"],["copy","Тексты сайта","T"],
-    ["assistant","ИИ-помощник","✦","ОБЩЕНИЕ С КЛИЕНТАМИ"],["assistantInbox","Диалоги","◌"],
+    ["quoteRequests","Заявки на КП","▤","ОБЩЕНИЕ С КЛИЕНТАМИ"],["assistant","ИИ-помощник","✦"],["assistantInbox","Диалоги","◌"],
     ["services","Услуги","⚗","МАТЕРИАЛЫ ЛАБОРАТОРИИ"],["priceEntries","Прайс-лист","≡"],["faqs","Частые вопросы","?"],["documents","Документы","▱"],["equipment","Оборудование","⌘"],["partners","Партнёры","◇"],
     ["media","Медиатека","▧","НАСТРОЙКИ"],["images","Изображения сайта","▣"],["aboutContent","О компании","◎"],["processSteps","Этапы анализа","↗"],["clientSteps","Шаги для клиентов","→"],["settings","Общие настройки","⚙"],["backups","История и восстановление","↶"],["users","Пользователи","♙"]
   ];
@@ -22,6 +22,7 @@
   const labels = { id:"Идентификатор",schemaVersion:"Версия структуры",title:"Заголовок",name:"Название",label:"Подпись",description:"Описание",desc:"Краткое описание",text:"Текст",body:"Текст",lead:"Вступительный текст",slug:"Адрес страницы",status:"Публикация",kind:"Тип страницы",serviceId:"Связанная услуга",blocks:"Содержимое раздела",category:"Направление",icon:"Значок",method:"Метод / технология",methods:"Методы и процедуры",methodsTitle:"Заголовок блока методов",samples:"Образцы",sampleTags:"Виды образцов",requirements:"Требования к образцам",result:"Результат для клиента",material:"Материал",photo:"Фотография",src:"Изображение",alt:"Описание изображения (alt)",url:"Ссылка",href:"Ссылка",target:"Открытие ссылки",page:"Страница",enabled:"Показывать раздел",code:"Код услуги",detail:"Метод / параметры — исходный текст",amount:"Стоимость — исходный текст",detailLocalized:"Метод / параметры на сайте",amountLocalized:"Стоимость на сайте",caption:"Подпись",logo:"Логотип",type:"Тип",model:"Модель",manufacturer:"Производитель",showOnHome:"Показывать на главной",selector:"Область на сайте",sourceUrl:"Источник",facts:"Ключевые показатели",overviewTitle:"Заголовок описания",overview:"Описание",note:"Дополнительные условия",faq:"Частые вопросы",equipmentTitle:"Заголовок оборудования",equipmentIntro:"Вступление об оборудовании",historyTitle:"Заголовок истории",history:"История",capabilitiesTitle:"Направления деятельности",capabilities:"Направления деятельности",qualityTitle:"Заголовок о качестве",qualityText:"Текст о качестве",qualityBullets:"Принципы качества",ctaTitle:"Заголовок призыва к действию",ctaText:"Текст призыва к действию",siteName:"Название сайта",phone:"Основной телефон",phoneSecondary:"Дополнительный телефон",email:"Электронная почта",address:"Почтовый адрес",hours:"Режим работы",logoFull:"Полный логотип",logoMark:"Компактный логотип",pricePdf:"Прайс-лист PDF",limsUrl:"LIMS кабинет",videoUrl:"Видео YouTube",mapUrl:"Карта",items:"Пункты списка",level:"Уровень заголовка" };
   const groupLabels = { hero:"Первый экран",about:"О лаборатории",stat:"Показатели",services:"Услуги",service:"Карточки услуг",quality:"Качество",equipment:"Оборудование",process:"Порядок анализа",clients:"Клиентам",sample:"Подготовка образцов",price:"Прайс-лист",quote:"Коммерческое предложение",faq:"Частые вопросы",contact:"Контакты",form:"Форма запроса КП",footer:"Подвал сайта",nav:"Меню",search:"Поиск",detail:"Страницы услуг",serviceUi:"Подписи на страницах услуг",aboutUi:"Подписи страницы компании",partners:"Партнёры",certificates:"Сертификаты",media:"Видео",brand:"Логотип",menu:"Мобильное меню",language:"Переключение языков",visual:"Визуальные подписи" };
   const specialLabels = { "hero.title":"Главный заголовок","hero.lead":"Основное описание","hero.sub":"Дополнительное описание","hero.cta":"Кнопка запроса КП","hero.price":"Кнопка прайса","contact.address":"Адрес лаборатории","contact.hours":"Режим работы","footer.legal":"Юридическое название","nav.cta":"Кнопка запроса КП","partners.title":"Заголовок партнёров","topline":"Верхняя строка сайта","skip":"Ссылка перехода к содержимому" };
+  groupLabels.rfq = "Выбор анализов для КП";
   class ApiError extends Error { constructor(message, status, code) { super(message); this.status=status; this.code=code; } }
   function safeUrl(value, mediaOnly) {
     const url=String(value||"").trim();
@@ -69,7 +70,7 @@
   }
   function languageSwitch() { return '<div class="lang-switch" role="group" aria-label="Язык редактирования">'+langs.map(lang=>'<button type="button" data-action="language" data-lang="'+lang+'" class="'+(lang===state.lang?"active":"")+'" aria-pressed="'+(lang===state.lang)+'">'+lang.toUpperCase()+'</button>').join("")+'</div>'; }
   function drawNav() {
-    const items = isManager() ? managerNav : nav.filter(([id]) => id !== "users" || isAdmin());
+    const items = isManager() ? managerNav : nav.filter(([id]) => !["users","quoteRequests"].includes(id) || isAdmin());
     $("#sidebar-nav").innerHTML=items.map(([id,name,icon,group])=>(group?'<p class="nav-group-label">'+esc(group)+'</p>':"")+'<button type="button" class="nav-item '+((state.view===id||id==="assistant"&&state.view==="assistantKnowledge")?"active":"")+'" data-action="navigate" data-view="'+id+'" '+((state.view===id||id==="assistant"&&state.view==="assistantKnowledge")?'aria-current="page"':"")+'><span class="nav-icon" aria-hidden="true">'+icon+'</span><span>'+esc(name)+'</span>'+(["pages","services","priceEntries","documents","equipment","partners"].includes(id)?'<span class="nav-count">'+(state.content?.[id]?.length||0)+'</span>':"")+'</button>').join("");
   }
   function showAuth(session) {
@@ -125,17 +126,19 @@
   }
   function closeSidebar() { document.body.classList.remove("sidebar-open");$("#sidebar-toggle").setAttribute("aria-expanded","false");$("#sidebar-shade").hidden=true;$(".admin-main").inert=false; }
   function navigate(view) {
-    if ((isManager() && !managerNav.some(([id])=>id===view)) || (view==="users" && !isAdmin())) return;
+    if ((isManager() && !managerNav.some(([id])=>id===view)) || (["users","quoteRequests"].includes(view) && !isAdmin())) return;
+    if(view==="quoteRequests")state.quotePage=1;
     if(state.view==="assistantInbox"&&view!=="assistantInbox")stopOperatorRuntime(false);
     state.view=view;state.item=null;state.query="";drawNav();render();closeSidebar();$("#workspace").focus();
   }
   function render() {
     $("#view-title").textContent=titleFor(state.view);
-    $("#view-eyebrow").textContent=state.view==="overview"?"ПАНЕЛЬ УПРАВЛЕНИЯ":state.view==="settings"?"ПАРАМЕТРЫ САЙТА":"РЕДАКТИРОВАНИЕ КОНТЕНТА";
+    $("#view-eyebrow").textContent=state.view==="overview"?"ПАНЕЛЬ УПРАВЛЕНИЯ":state.view==="quoteRequests"?"ОБЩЕНИЕ С КЛИЕНТАМИ":state.view==="settings"?"ПАРАМЕТРЫ САЙТА":"РЕДАКТИРОВАНИЕ КОНТЕНТА";
     const workspace=$("#workspace");
     if(state.view==="overview")workspace.innerHTML=overview();
     else if(state.view==="assistant"){workspace.innerHTML=assistantEditor();refreshAssistantConfig();}
     else if(state.view==="assistantInbox"){workspace.innerHTML=inboxEditor();startOperatorRuntime();}
+    else if(state.view==="quoteRequests")loadQuoteView();
     else if(state.view==="users"){workspace.innerHTML='<div id="users-workspace" aria-live="polite"><p class="media-loading">Загружаем пользователей…</p></div>';loadUsers();}
     else if(state.view==="backups"){workspace.innerHTML='<div id="backups-workspace"><p class="media-loading">Загружаем историю изменений…</p></div>';loadBackups();}
     else if(state.view==="media") { workspace.innerHTML='<div id="media-workspace"><p class="media-loading">Загружаем файлы…</p></div>';loadMedia(false); }
@@ -191,7 +194,7 @@
     const target=section.targetId||section.id,lang=state.lang,page=state.content.pages.find(page=>page.id===section.page);
     let fields="",links=[];
     if(section.page==="home"){
-      const prefixes={hero:["hero","media"],about:["about","stat"],services:["services","service"],quality:["quality","certificates"],equipment:["equipment"],process:["process"],clients:["clients"],"requirements-band":["sample"],price:["price","quote"],faq:["faq"],partners:["partners"],contacts:["contact","form"]}[target];
+      const prefixes={hero:["hero","media"],about:["about","stat"],services:["services","service"],quality:["quality","certificates"],equipment:["equipment"],process:["process"],clients:["clients"],"requirements-band":["sample"],price:["price","quote"],faq:["faq"],partners:["partners"],contacts:["contact","form","rfq"]}[target];
       if(!prefixes)return"";
       fields=Object.entries(state.content.copy?.[lang]||{}).filter(([key])=>prefixes.includes(key.split(".")[0])&&!(target==="contacts"&&["contact.address","contact.hours"].includes(key))).map(([key,value])=>'<div class="copy-key">'+esc(key)+'</div>'+copyField(key,value,["copy",lang,key],specialLabels[key]||labelFor(key.slice(key.indexOf(".")+1)))).join("");
       if(target==="contacts")fields=["address","hours","phone","phoneSecondary","email"].map(key=>field(state.content.settings[key],["settings",key],labelFor(key),0)).join("")+fields;
@@ -382,6 +385,79 @@
   }
   function formatBytes(size) { return Number(size)>=1048576?(Number(size)/1048576).toFixed(1)+" МБ":Math.max(1,Math.round(Number(size)/1024))+" КБ"; }
   function displayDate(value) { const date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleString("ru-RU",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"Дата не указана"; }
+  const quoteInboxPath = "/api/admin/quote-requests";
+  const quoteUnits = {
+    sample:{one:"проба",few:"пробы",many:"проб"},test:{one:"испытание",few:"испытания",many:"испытаний"},
+    batch:{one:"партия",few:"партии",many:"партий"},kg:"кг",hour:"ч"
+  };
+  const quotePlural = new Intl.PluralRules("ru");
+  function quoteVolume(item) {
+    const unit=quoteUnits[item.unit];
+    const label=typeof unit==="string" ? unit : unit?.[quotePlural.select(item.quantity)] || item.unit;
+    return Number(item.quantity).toLocaleString("ru-RU")+" "+label;
+  }
+  const quoteDelivery = {pending:"Ожидает отправки",sent:"Отправлено сотруднику",failed:"Письмо не доставлено"};
+  const quoteDate = new Intl.DateTimeFormat("ru-RU",{timeZone:"Asia/Bishkek",dateStyle:"short",timeStyle:"short"});
+
+  function quoteListMarkup(result) {
+    const rows = result.requests.map(request => {
+      const urgency = request.urgency==="urgent" ? '<span class="quote-priority">Срочно</span>' : "";
+      return '<li><button type="button" class="quote-inbox-entry" data-action="quote-open" data-id="'+esc(request.reference)+'">'+
+        '<span><strong>'+esc(request.company)+'</strong><span>'+esc(request.person)+'</span><small>'+esc(request.reference)+'</small></span>'+
+        '<span>'+urgency+'<time datetime="'+esc(request.receivedAt)+'">'+esc(quoteDate.format(new Date(request.receivedAt)))+'</time>'+
+        (request.delivery==="failed"?'<small>Письмо не доставлено</small>':'')+'</span>'+
+        '</button></li>';
+    }).join("");
+    const pages = Math.max(1, Math.ceil(result.total / 50));
+    const pager = pages <= 1 ? "" : '<nav class="quote-inbox-pages" aria-label="Страницы заявок">'+
+      '<button type="button" class="button" data-action="quote-page" data-page="'+(result.page-1)+'" '+(result.page<=1?"disabled":"")+'>Назад</button>'+
+      '<span>'+result.page+' / '+pages+'</span><button type="button" class="button" data-action="quote-page" data-page="'+(result.page+1)+'" '+(result.page>=pages?"disabled":"")+'>Далее</button></nav>';
+    return '<section class="panel"><div class="quote-inbox-heading"><h2>Входящие заявки · '+esc(result.total)+'</h2>'+
+      '<button type="button" class="button" data-action="quote-list">Обновить</button></div>'+
+      (rows ? '<ul class="quote-inbox-list">'+rows+'</ul>' : '<p>Когда клиент отправит запрос на коммерческое предложение, он появится здесь.</p>')+
+      pager+'</section>';
+  }
+
+  function quoteDetailMarkup(request) {
+    const f = request.fields;
+    const items = (f.quote_items || []).map(item =>
+      '<li><span><strong>'+esc(item.title)+'</strong><small>'+esc([item.code,item.category].filter(Boolean).join(" · "))+'</small></span>'+
+      '<span>'+esc(quoteVolume(item))+'</span></li>'
+    ).join("");
+    const details = [
+      ["Контактное лицо",f.person],["Электронная почта",f.email],["Телефон",f.phone],["Страна",f.country],
+      ["Язык заявки",({ru:"Русский",kg:"Кыргызча",en:"English"})[f.language]],
+      ["Тип образцов",f.sample_type],["Всего образцов",f.sample_count],["Описание задачи",f.research],
+      ["Предполагаемый метод",f.method],["Желаемая дата",f.deadline],["Дополнительные пожелания",f.comment],
+      ["Уведомление по почте",quoteDelivery[request.delivery]||request.delivery]
+    ].filter(([,value])=>value).map(([name,value])=>'<div><dt>'+esc(name)+'</dt><dd>'+esc(value)+'</dd></div>').join("");
+    return '<button type="button" class="text-button" data-action="quote-list">← Все заявки</button>'+
+      '<article class="editor-card quote-inbox-detail"><header><p class="muted">'+esc(request.reference)+' · '+esc(quoteDate.format(new Date(request.receivedAt)))+' (Бишкек)</p>'+
+      '<h2>'+esc(f.company)+'</h2><p>'+ (f.urgency==="urgent"?'<strong class="quote-priority">Срочный запрос</strong>':'Обычный срок')+'</p></header>'+
+      (items?'<h3>Запрошенные анализы</h3><ul class="quote-inbox-items">'+items+'</ul>':'')+
+      '<dl>'+details+'</dl>'+
+      (request.attachment?'<a class="button" download href="'+quoteInboxPath+'/'+encodeURIComponent(request.reference)+'/attachment">Скачать ТЗ · '+esc(request.attachment.filename)+'</a>':'')+
+      '</article>';
+  }
+
+  async function loadQuoteView(reference) {
+    if(!isAdmin() || state.view!=="quoteRequests")return;
+    const target = document.createElement("div");
+    target.innerHTML='<p role="status">Загружаем '+(reference?"заявку":"список заявок")+'…</p>';
+    $("#workspace").replaceChildren(target);
+    try {
+      const path = reference ? "/"+encodeURIComponent(reference) : "?page="+(state.quotePage||1);
+      const result = await api(quoteInboxPath+path);
+      if(!target.isConnected)return;
+      target.innerHTML = reference ? quoteDetailMarkup(result.request) : quoteListMarkup(result);
+      const title=target.querySelector("h2");
+      title.tabIndex=-1;
+      title.focus({preventScroll:true});
+    } catch(error) {
+      if(target.isConnected)target.innerHTML='<p role="alert">'+esc(error.message)+'</p><button type="button" class="button" data-action="quote-list">Вернуться к списку</button>';
+    }
+  }
+
   async function loadBackups() {
     try{
       const result=await api("/api/admin/backups");state.backups=result.backups||[];
@@ -648,6 +724,9 @@
     const action=button.dataset.action,index=Number(button.dataset.index),path=button.dataset.path?JSON.parse(button.dataset.path):null;
     if(state.restoring){toast("Дождитесь завершения восстановления.");return;}
     if(action==="navigate")return navigate(button.dataset.view);
+    if(action==="quote-list")return loadQuoteView();
+    if(action==="quote-open")return loadQuoteView(button.dataset.id);
+    if(action==="quote-page"){state.quotePage=Number(button.dataset.page);return loadQuoteView();}
     if(action==="users-new")return openUserEditor();
     if(action==="users-edit")return openUserEditor(button.dataset.id);
     if(action==="users-refresh")return loadUsers();

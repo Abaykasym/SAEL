@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,".."),app=fs.readFileSync(path.join(root,"app.
 const cutoff=app.indexOf('\nasync function initializeSite') >= 0 ? app.indexOf('\nasync function initializeSite') : app.indexOf('\ndocument.querySelectorAll("[data-lang]');
 if(cutoff<0)throw new Error("Legacy data boundary not found");
 const ctx=vm.createContext({window:{},localStorage:{getItem(){return"ru";}},URLSearchParams,location:{search:""},console});
-for(const f of ["price-translations.js","service-content.js","about-content.js"])vm.runInContext(fs.readFileSync(path.join(root,f),"utf8"),ctx);
+for(const f of ["price-translations.js","service-content.js","about-content.js","quote-builder.js"])vm.runInContext(fs.readFileSync(path.join(root,f),"utf8"),ctx);
 vm.runInContext(app.slice(0,cutoff),ctx);
 const legacy=vm.runInContext("({copy,services,servicePhotos,priceEntries,categories,processSteps,clientSteps,faqs,servicePageUi})",ctx);
 const plain=value=>JSON.parse(JSON.stringify(value));
@@ -33,7 +33,7 @@ const seed={
  schemaVersion:1,
  settings:{siteName:"SAEL",phone:"+996 3133 31925",phoneSecondary:"+996 3133 34251",email:"sael.karabalta@saelglobal.com",address:fromCopy("contact.address"),hours:fromCopy("contact.hours"),logoFull:"assets/sael-logo-full.svg",logoMark:"assets/sael-logo-mark.svg",pricePdf:"https://sael.kg/cb/pricelist.pdf",limsUrl:"https://sael.kg/cb",videoUrl:"https://www.youtube.com/watch?v=teQ6Iv6p5Ms",mapUrl:"https://maps.google.com/?q=SAEL+Kara-Balta+Kalinina+2"},
  copy:c.copy,services:c.services.map(s=>({...s,photo:c.servicePhotos[s.id],status:"published"})),
- priceEntries:c.priceEntries.map((p,i)=>({...p,id:"price-"+String(i+1).padStart(3,"0"),detailLocalized:{en:p.detail,...plain(ctx.window.saelPriceTranslations.details[p.detail]||{})},amountLocalized:p.amount==="По запросу"?localized("По запросу","Суроо боюнча","On request"):{en:p.amount,...plain(ctx.window.saelPriceTranslations.amounts[p.amount]||{})}})),
+ priceEntries:c.priceEntries.map(p=>({...p,detailLocalized:{en:p.detail,...plain(ctx.window.saelPriceTranslations.details[p.detail]||{})},amountLocalized:p.amount==="По запросу"?localized("По запросу","Суроо боюнча","On request"):{en:p.amount,...plain(ctx.window.saelPriceTranslations.amounts[p.amount]||{})}})),
  categories:c.categories,priceTranslations:plain(ctx.window.saelPriceTranslations),serviceContent:plain(ctx.window.saelServiceContent),aboutContent:plain(ctx.window.saelAboutContent),processSteps:c.processSteps,clientSteps:c.clientSteps,faqs:c.faqs,
  pages:[
   {id:"home",slug:"home",kind:"home",title:localized("Главная","Башкы бет","Home"),description:localized("Независимая аналитическая лаборатория SAEL","SAEL көз карандысыз аналитикалык лабораториясы","SAEL independent analytical laboratory"),status:"published",blocks:[]},

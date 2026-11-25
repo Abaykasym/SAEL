@@ -8,6 +8,7 @@ const net = require("node:net");
 const { promisify } = require("node:util");
 const Busboy = require("busboy");
 const scrypt = promisify(crypto.scrypt);
+const gzip = promisify(require("node:zlib").gzip);
 const { defaultAssistant } = require("./assistant-config");
 const { siteImagePath } = require("./site-assets");
 
@@ -339,6 +340,16 @@ function createCms(options) {
     };
   }
   function contentView(state, user) {
+    if (accountRole(user) === "admin") {
+      // Give an existing installation the new quotation labels when its editor opens.
+      const defaults = typeof options.seed === "function" ? options.seed() : options.seed;
+      for (const lang of ["ru","kg","en"]) {
+        const copy = state.content.copy[lang];
+        for (const [key,value] of Object.entries(defaults?.copy?.[lang] || {})) {
+          if (key.startsWith("rfq.") && !Object.hasOwn(copy,key)) copy[key]=value;
+        }
+      }
+    }
     const payload = accountRole(user) === "admin"
       ? state.content
       : { assistant: { knowledge: state.content.assistant.knowledge } };
@@ -424,7 +435,27 @@ function createCms(options) {
             for (const key of Object.keys(published.copy[lang])) if (/^(hero|about|stat|services|quality|equipment|process|clients|price|quote|faq|partners)\./.test(key)) delete published.copy[lang][key];
           }
         }
-        json(res, 200, { content: published, revision: state.revision, updatedAt: state.updatedAt }); return true;
+        const payload = Buffer.from(JSON.stringify({ content: published, revision: state.revision, updatedAt: state.updatedAt }));
+        const tag = '"' + crypto.createHash("sha256").update(payload).digest("base64url") + '"';
+        res.setHeader("Cache-Control", "public, no-cache");
+        res.setHeader("ETag", "W/" + tag);
+        res.setHeader("Vary", "Accept-Encoding");
+        const matches = String(req.headers["if-none-match"] || "").split(",").some(value => {
+          const candidate = value.trim().replace(/^W\//, "");
+          return candidate === "*" || candidate === tag;
+        });
+        if (matches) { res.statusCode = 304; res.end(); return true; }
+        const acceptsGzip = String(req.headers["accept-encoding"] || "").split(",").some(value => {
+          const match = /^\s*gzip\s*(?:;\s*q\s*=\s*([\d.]+)\s*)?$/i.exec(value);
+          return match && (match[1] === undefined || Number(match[1]) > 0);
+        });
+        const body = acceptsGzip ? await gzip(payload) : payload;
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        if (acceptsGzip) res.setHeader("Content-Encoding", "gzip");
+        res.setHeader("Content-Length", body.length);
+        res.end(body); return true;
       }
       if (pathname === "/api/admin/session" && req.method === "GET") {
         const state = await auth(); let current; try { current = await session(req, false); } catch (error) { if (!(error instanceof CmsError) || error.status !== 401) throw error; }

@@ -88,22 +88,65 @@
     }
     return result;
   }
-  window.saelCmsReady = (async function () {
-    if (!["http:", "https:"].includes(location.protocol)) return null;
+  const httpSite = ["http:", "https:"].includes(location.protocol);
+  const snapshotKey = "sael:public-cms:v1";
+  let inFlight = null;
+  function validSnapshot(result) {
+    const content = result?.content;
+    return content?.schemaVersion === 1 && Array.isArray(content.pages) && Array.isArray(content.services)
+      && Array.isArray(content.priceEntries) && content.copy && Number.isSafeInteger(result.revision);
+  }
+  function useSnapshot(result) {
+    if (state.content && state.revision === result.revision && state.updatedAt === result.updatedAt) return;
+    state.content = window.saelCmsContent = result.content;
+    state.revision = result.revision;
+    state.updatedAt = result.updatedAt;
+  }
+  async function fetchSnapshot() {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+    const timer = setTimeout(() => controller.abort(), 12000);
     try {
-      const response = await fetch("/api/cms/public", { signal: controller.signal, cache: "no-store", headers: { Accept: "application/json" } });
-      if (!response.ok) { state.loadError = true; return null; }
+      const response = await fetch("/api/cms/public", { signal: controller.signal, credentials: "omit", headers: { Accept: "application/json" } });
+      if (!response.ok) throw Object.assign(new Error("CMS HTTP error"), { status: response.status });
       const result = await response.json();
-      if (!result.content || result.content.schemaVersion !== 1) { state.loadError = true; return null; }
-      state.content = result.content;
-      state.revision = result.revision;
-      window.saelCmsContent = state.content;
-      return state.content;
-    } catch { state.loadError = true; return null; }
-    finally { clearTimeout(timer); }
+      if (!validSnapshot(result)) throw new Error("Invalid public content");
+      return result;
+    } finally { clearTimeout(timer); }
+  }
+  function refreshContent() {
+    if (inFlight) return inFlight;
+    state.loadError = false;
+    inFlight = (async function () {
+      let result;
+      try { result = await fetchSnapshot(); }
+      catch (error) {
+        if (error.status && error.status < 500 && error.status !== 408 && error.status !== 429) throw error;
+        await new Promise(resolve => setTimeout(resolve, 750));
+        result = await fetchSnapshot();
+      }
+      useSnapshot(result);
+      // This tab's fallback contains only the public GET response, never form or account data.
+      try { sessionStorage.setItem(snapshotKey, JSON.stringify(result)); } catch {}
+    })().catch(function () { state.loadError = true; }).finally(function () {
+      inFlight = null;
+      window.dispatchEvent(new Event("sael:cms-update"));
+    });
+    return inFlight;
+  }
+  window.saelCmsReady = (async function () {
+    if (!httpSite) return null;
+    let timer;
+    await Promise.race([refreshContent(), new Promise(resolve => { timer = setTimeout(resolve, 500); })]);
+    clearTimeout(timer);
+    if (!state.content) {
+      try {
+        const cached = JSON.parse(sessionStorage.getItem(snapshotKey));
+        if (validSnapshot(cached)) useSnapshot(cached);
+      } catch {}
+    }
+    return state.content;
   })();
+  window.addEventListener("online", function () { if (httpSite && state.loadError) refreshContent(); });
   window.saelCmsApply = function (bindings) {
     state.bindings = bindings;
     const content = state.content;
@@ -249,6 +292,7 @@
     if (!host) return;
     const managed = Array.from(host.children).filter(node => node.matches("section") && node.id && !node.classList.contains("cms-unavailable"));
     const tail = managed.length ? Array.from(host.children).find(node => !managed.includes(node) && !node.classList.contains("cms-page-extra")) : null;
+    const ordered = [];
     for (const node of managed) node.hidden = !applicable.some(section => (section.targetId || section.id) === node.id && section.enabled !== false);
     for (const section of applicable) {
       const targetId = section.targetId || section.id;
@@ -265,7 +309,13 @@
         node.hidden = false;
         if (section.blocks?.length) { const extra = element("div", "wrap cms-section-extra"); extra.append(blocksNode(section.blocks, locale)); node.append(extra); }
       }
-      host.insertBefore(node, tail || null);
+      ordered.push(node);
+    }
+    let next = tail || null;
+    for (let i = ordered.length - 1; i >= 0; i--) {
+      const node = ordered[i];
+      if (node.parentElement !== host || node.nextElementSibling !== next) host.insertBefore(node, next);
+      next = node;
     }
     if (page?.blocks?.length && current.kind !== "custom") {
       const extra = element("section", "cms-page-extra cms-section"); const wrap = element("div", "wrap"); wrap.append(blocksNode(page.blocks, locale)); extra.append(wrap); main.append(extra);
@@ -369,17 +419,47 @@
       images.forEach(image => { if (image.tagName !== "IMG") return; image.src = src; image.alt = localeText(item.alt, locale); });
     }
   }
-  function unavailable(locale, untranslated) {
+  const loadingText = {
+    ru: ["Загружаем страницу…", "Получаем опубликованный материал из каталога SAEL.", "Не удалось загрузить эту страницу", "Можно повторить загрузку или перейти на главную.", "Повторить", "Материалы временно не обновляются. Условия заказа можно уточнить в SAEL."],
+    kg: ["Барак жүктөлүүдө…", "SAEL каталогунан жарыяланган материал жүктөлүүдө.", "Бул барак жүктөлгөн жок", "Кайра аракет кылыңыз же башкы бетке өтүңүз.", "Кайра аракет кылуу", "Материалдар азырынча жаңыртылган жок. Буйрутманын шарттарын SAELден тактаңыз."],
+    en: ["Loading this page…", "Retrieving the published information from SAEL.", "This page could not be loaded", "Try loading it again or return to the home page.", "Try again", "Updates are temporarily unavailable. Contact SAEL to confirm your order requirements."]
+  };
+  function retryButton(locale) {
+    const button = element("button", "button button-ghost", loadingText[locale][4]);
+    button.type = "button";
+    button.addEventListener("click", () => { button.disabled = true; refreshContent(); });
+    return button;
+  }
+  function availabilityNote(locale, show) {
+    let note = document.getElementById("cms-update-note");
+    if (!show) { note?.remove(); return; }
+    if (!note) {
+      note = element("aside", "wrap cms-update-note");
+      note.id = "cms-update-note";
+      document.querySelector("footer")?.before(note);
+    }
+    note.replaceChildren(element("span", "", loadingText[locale][5]), retryButton(locale));
+  }
+  function unavailable(locale, untranslated, awaitingContent = false) {
     const messages = {
       ru: [untranslated ? "Страница пока не переведена" : "Страница не найдена", untranslated ? "Выберите другой язык или свяжитесь с лабораторией." : "Возможно, страница была перемещена или снята с публикации.", "На главную"],
       kg: [untranslated ? "Барак азырынча которула элек" : "Барак табылган жок", untranslated ? "Башка тилди тандаңыз же лаборатория менен байланышыңыз." : "Барак жылдырылган же жарыялоодон алынган болушу мүмкүн.", "Башкы бет"],
       en: [untranslated ? "This page has not been translated yet" : "Page not found", untranslated ? "Choose another language or contact the laboratory." : "The page may have moved or is no longer published.", "Home"]
     }[locale];
+    let label = untranslated ? "TRANSLATION" : "404";
+    if (awaitingContent) {
+      const text = loadingText[locale];
+      messages[0] = text[state.loadError ? 2 : 0];
+      messages[1] = text[state.loadError ? 3 : 1];
+      label = "";
+    }
     const main = document.querySelector("main"); if (!main) return;
     main.dataset.cmsUnavailable = "true";
     let notice = main.querySelector(".cms-unavailable"); if (!notice) { notice = element("section", "cms-unavailable cms-section"); main.prepend(notice); }
     notice.replaceChildren(); const wrap = element("div", "wrap"); const link = element("a", "button button-primary", messages[2]); link.href = "index.html";
-    wrap.append(element("p", "eyebrow", "SAEL / " + (untranslated ? "TRANSLATION" : "404")), element("h1", "", messages[0]), element("p", "cms-page-lead", messages[1]), link); notice.append(wrap);
+    wrap.append(element("p", "eyebrow", label ? "SAEL / " + label : "SAEL"), element("h1", "", messages[0]), element("p", "cms-page-lead", messages[1]));
+    if (awaitingContent && state.loadError) wrap.append(retryButton(locale));
+    wrap.append(link); notice.append(wrap);
     document.title = messages[0] + " — " + (state.content?.settings?.siteName || "SAEL");
   }
   function renderPage(current, page, locale) {
@@ -403,17 +483,14 @@
   }
   window.saelCmsRender = function (value) {
     const locale = languages.includes(value) ? value : "ru";
+    const current = route();
+    const needsSnapshot = current.kind === "custom" || httpSite && current.kind === "service";
+    availabilityNote(locale, state.loadError && (!!state.content || !needsSnapshot));
     if (!state.content) {
-      if (state.loadError || route().kind === "custom") {
-        unavailable(locale, false);
-        if (state.loadError) {
-          const messages = { ru: ["Сайт временно недоступен", "Не удалось загрузить содержимое. Обновите страницу через некоторое время."], kg: ["Сайт убактылуу жеткиликсиз", "Мазмунду жүктөө мүмкүн болгон жок. Бир аздан кийин баракты жаңыртыңыз."], en: ["The website is temporarily unavailable", "The content could not be loaded. Please refresh the page in a moment."] }[locale];
-          const notice = document.querySelector(".cms-unavailable"); notice.querySelector("h1").textContent = messages[0]; notice.querySelector(".cms-page-lead").textContent = messages[1]; document.title = messages[0] + " — SAEL";
-        }
-      }
+      if (needsSnapshot) unavailable(locale, false, httpSite);
       return;
     }
-    const current = route(), page = pageFor(current);
+    const page = pageFor(current);
     renderMenus(locale); renderSettings(locale); renderCollections(locale);
     const missingService = current.kind === "service" && !(state.content.services || []).some(service => service.id === current.serviceId && published(service));
     if (missingService || Array.isArray(state.content.pages) && (!page || !published(page))) { unavailable(locale, false); return; }

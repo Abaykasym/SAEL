@@ -12,7 +12,9 @@ require("dotenv").config({ path: path.join(ROOT, ".env") });
 const PUBLIC_ROOT = fs.existsSync(path.join(ROOT, "public", "index.html")) ? path.join(ROOT, "public") : ROOT;
 const ADMIN_DIR = fs.existsSync(path.join(PUBLIC_ROOT,"admin","index.html")) ? "admin/" : "";
 const { createCms } = require("./cms-server");
+const { QuoteError, quoteParameters, createQuoteStore, formatQuantity } = require("./quote-requests");
 const cms = createCms({root:ROOT,publicRoot:PUBLIC_ROOT,seed:JSON.parse(fs.readFileSync(path.join(ROOT,"cms-seed.json"),"utf8"))});
+const quoteStore = createQuoteStore(cms.dataDir);
 const { createAssistant } = require("./assistant-server");
 const { createAnswerer } = require("./assistant-ai");
 const { renderSiteAssets } = require("./site-assets");
@@ -34,6 +36,7 @@ const PUBLIC_FILES = new Map([
   ["/service-details.css", ["service-details.css", "text/css; charset=utf-8"]],
   ["/service-content.js", ["service-content.js", "text/javascript; charset=utf-8"]],
   ["/app.js", ["app.js", "text/javascript; charset=utf-8"]],
+  ["/quote-builder.js", ["quote-builder.js", "text/javascript; charset=utf-8"]],
   ["/price-translations.js", ["price-translations.js", "text/javascript; charset=utf-8"]],
   ["/cms-client.js", ["cms-client.js", "text/javascript; charset=utf-8"]],
   ["/cms-public.css", ["cms-public.css", "text/css; charset=utf-8"]],
@@ -192,9 +195,9 @@ function parseMultipart(req) {
       return;
     }
     try {
-      parser = Busboy({headers:req.headers, limits:{fileSize:MAX_FILE_SIZE, files:1, fields:16, fieldSize:5000, parts:18, headerPairs:100}});
+      parser = Busboy({headers:req.headers, defParamCharset:"utf8", limits:{fileSize:MAX_FILE_SIZE, files:1, fields:18, fieldSize:40 * 1024, parts:20, headerPairs:100}});
     } catch { finish(new HttpError(400, "invalid_multipart")); return; }
-    const allowedFields = new Set(["company","person","email","phone","country","sample_count","sample_type","research","method","deadline","comment","consent","website"]);
+    const allowedFields = new Set(["company","person","email","phone","country","sample_count","sample_type","research","method","deadline","comment","consent","website","quote_items","urgency","request_key","language"]);
     parser.on("field", (name,value,info) => {
       if (!allowedFields.has(name) || Object.hasOwn(fields,name) || info.valueTruncated) { fail(new HttpError(400,"invalid_form_fields")); return; }
       fields[name] = value;
@@ -232,17 +235,19 @@ const FIELD_LIMITS = {
   sample_type: 500, research: 5000, method: 500, deadline: 200, comment: 3000
 };
 
-function validateRequest(fields, upload) {
+function validateRequest(fields, upload, content) {
   const normalized = Object.create(null);
   for (const [name, limit] of Object.entries(FIELD_LIMITS)) {
     const value = String(fields[name] || "").trim();
     if (value.length > limit) throw new HttpError(400, "field_too_long");
     normalized[name] = value;
   }
-  if (!normalized.company || !normalized.person || !normalized.email || !normalized.phone || !normalized.research) {
+  Object.assign(normalized, quoteParameters(fields, content));
+  if (!normalized.company || !normalized.person || !normalized.email || !normalized.phone ||
+      (!normalized.quote_items.length && !normalized.research && !upload)) {
     throw new HttpError(400, "required_fields_missing");
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalized.email)) throw new HttpError(400, "invalid_email");
+  if (!/^[^\s@,;:<>()"\\]+@[^\s@,;:<>()"\\]+\.[^\s@,;:<>()"\\]{2,}$/.test(normalized.email)) throw new HttpError(400, "invalid_email");
   if (fields.consent !== "yes") throw new HttpError(400, "consent_required");
 
   if (upload) {
@@ -254,7 +259,9 @@ function validateRequest(fields, upload) {
     if (upload.size > MAX_FILE_SIZE) throw new HttpError(413, "file_too_large");
     if (!policy.signature(upload.content)) throw new HttpError(415, "invalid_file_content");
     const name = path.basename(upload.filename.replace(/\\/g, "/"));
-    upload.filename = name.replace(/[^a-zA-Z0-9._ -]/g, "_").slice(0, 120) || `technical-assignment.${extension}`;
+    const safeStem = path.parse(name).name.normalize("NFC").replace(/[^\p{L}\p{N}\p{M}№._ -]/gu, "_");
+    const stem = Array.from(safeStem).slice(0, 100).join("");
+    upload.filename = (stem || "technical-assignment") + "." + extension;
     upload.extension = extension;
   }
   return normalized;
@@ -274,9 +281,9 @@ function mailConfiguration() {
   return config;
 }
 
-function requestText(fields) {
+function requestText(reference,fields) {
   return [
-    "Новая заявка на коммерческое предложение с сайта SAEL",
+    "Новая заявка на коммерческое предложение с сайта SAEL · " + reference,
     "",
     `Компания: ${fields.company}`,
     `Контактное лицо: ${fields.person}`,
@@ -285,14 +292,17 @@ function requestText(fields) {
     `Страна: ${fields.country || "—"}`,
     `Количество образцов: ${fields.sample_count || "—"}`,
     `Тип образцов: ${fields.sample_type || "—"}`,
-    `Необходимые исследования: ${fields.research}`,
+    "Выбранные услуги:",
+    ...fields.quote_items.map(item => `• ${item.title}${item.code ? " [" + item.code + "]" : ""} — ${formatQuantity(item.quantity, item.unit)}`),
+    `Дополнительные исследования: ${fields.research || "—"}`,
     `Предполагаемый метод: ${fields.method || "—"}`,
+    `Срочность: ${fields.urgency === "urgent" ? "срочно, требуется согласование" : "обычный порядок"}`,
     `Желаемый срок: ${fields.deadline || "—"}`,
     `Комментарий: ${fields.comment || "—"}`
   ].join("\n");
 }
 
-async function deliverRequest(fields, upload) {
+async function deliverRequest(reference, fields, upload) {
   const mail = mailConfiguration();
   const transporter = nodemailer.createTransport({
     host: mail.host,
@@ -310,17 +320,22 @@ async function deliverRequest(fields, upload) {
     from: mail.from,
     to: mail.to,
     replyTo: { name: fields.person.replace(/[\r\n]+/g, " "), address: fields.email },
-    subject: `Заявка на КП — ${safeCompany}`,
-    text: requestText(fields),
+    subject: `Заявка на КП · ${reference} — ${safeCompany}`,
+    text: requestText(reference,fields),
     attachments
   });
 
   try {
+    const confirmation = {
+      ru: ["SAEL получил ваш запрос на КП", "Мы получили вашу заявку. Специалист SAEL рассмотрит выбранные исследования и свяжется с вами.", "Номер заявки"],
+      kg: ["SAEL коммерциялык сунуш боюнча өтүнмөңүздү алды", "Өтүнмөңүздү алдык. SAEL адиси суралган изилдөөлөрдү карап чыгып, сиз менен байланышат.", "Өтүнмөнүн номери"],
+      en: ["SAEL received your quote request", "We have received your request. An SAEL specialist will review the requested work and contact you.", "Request reference"]
+    }[fields.language];
     await transporter.sendMail({
       from: mail.from,
-      to: fields.email,
-      subject: "Запрос на коммерческое предложение принят — SAEL",
-      text: `Здравствуйте, ${fields.person}!\n\nМы получили ваш запрос на коммерческое предложение${upload ? " и техническое задание" : ""}. Специалист SAEL рассмотрит данные и свяжется с вами.\n\nС уважением,\nSAEL`
+      to: { address: fields.email },
+      subject: confirmation[0] + " · " + reference,
+      text: confirmation[1] + "\n\n" + confirmation[2] + ": " + reference
     });
   } catch {
     console.error("customer_confirmation_failed");
@@ -344,7 +359,6 @@ async function notifyAssistantHandoff({conversation,contact,content}) {
 async function handleQuoteRequest(req, res) {
   try {
     checkRateLimit(req);
-    mailConfiguration();
     const contentType = String(req.headers["content-type"] || "");
     if (!contentType.toLowerCase().startsWith("multipart/form-data;")) throw new HttpError(415, "multipart_required");
     const { fields, upload } = await parseMultipart(req);
@@ -352,17 +366,54 @@ async function handleQuoteRequest(req, res) {
       sendJson(res, 200, { ok: true });
       return;
     }
-    const normalized = validateRequest(fields, upload);
-    await deliverRequest(normalized, upload);
-    sendJson(res, 200, { ok: true });
+    const content = fields.quote_items ? (await cms.getContent()).content : null;
+    const normalized = validateRequest(fields, upload, content);
+    const { reference, created } = await quoteStore.accept(normalized, upload, fields.request_key);
+    sendJson(res, 200, { ok: true, reference });
+    if (created) {
+      let delivery = "sent";
+      try { await deliverRequest(reference, normalized, upload); }
+      catch { delivery = "failed"; console.error("quote_notification_failed", reference); }
+      await quoteStore.markDelivery(reference, delivery).catch(() => console.error("quote_notification_status_failed", reference));
+    }
   } catch (error) {
-    if (error instanceof HttpError) {
+    if (error instanceof HttpError || error instanceof QuoteError) {
       if (error.status >= 500) console.error(error.code);
       sendJson(res, error.status, { ok: false, error: error.code });
       return;
     }
-    console.error("quote_request_delivery_failed");
-    sendJson(res, 502, { ok: false, error: "delivery_failed" });
+    console.error("quote_request_storage_failed");
+    sendJson(res, 503, { ok: false, error: "quote_storage_unavailable" });
+  }
+}
+
+async function handleAdminQuoteRequest(req, res, pathname) {
+  try {
+    const user = await cms.authorizeAdmin(req, false);
+    if (user.role !== "admin") throw new QuoteError(403, "forbidden_role");
+    if (req.method !== "GET") throw new QuoteError(405, "method_not_allowed");
+    if (pathname === "/api/admin/quote-requests") {
+      const page = Number(new URL(req.url, "http://localhost").searchParams.get("page") ?? 1);
+      if (!Number.isSafeInteger(page) || page < 1) throw new QuoteError(400, "invalid_page");
+      sendJson(res, 200, await quoteStore.list(page));
+      return;
+    }
+    const match = pathname.match(/^\/api\/admin\/quote-requests\/(SAEL-[0-9A-F]{24})(\/attachment)?$/);
+    if (!match) throw new QuoteError(404, "quote_not_found");
+    if (match[2]) {
+      const file = await quoteStore.download(match[1]);
+      res.setHeader("Content-Type", "application/octet-stream");
+      const ascii = file.filename.replace(/[^a-zA-Z0-9._ -]/g, "_");
+      const extended = ascii !== file.filename ? "; filename*=UTF-8''" + encodeURIComponent(file.filename) : "";
+      res.setHeader("Content-Disposition", 'attachment; filename="' + ascii + '"' + extended);
+      res.setHeader("Content-Length", file.data.length);
+      res.end(file.data);
+    } else {
+      sendJson(res, 200, { request: await quoteStore.detail(match[1]) });
+    }
+  } catch (error) {
+    if (error.status && error.code) sendJson(res, error.status, { error: error.code });
+    else { console.error("quote_inbox_read_failed"); sendJson(res, 503, { error: "quote_storage_unavailable" }); }
   }
 }
 
@@ -426,6 +477,10 @@ const server = http.createServer(async (req, res) => {
     res.setHeader("X-Robots-Tag","noindex, nofollow, noarchive");
     res.setHeader("Cache-Control","no-store");
   }
+  if (pathname === "/api/admin/quote-requests" || pathname.startsWith("/api/admin/quote-requests/")) {
+    await handleAdminQuoteRequest(req, res, pathname);
+    return;
+  }
   try { if (await assistant.handle(req,res,pathname)) return; if (await cms.handle(req,res,pathname)) return; }
   catch { console.error("cms_route_failed"); if (!res.headersSent) sendJson(res,503,{ok:false,error:"cms_unavailable"}); else res.end(); return; }
   if (pathname === "/api/quote-request") {
@@ -441,4 +496,4 @@ const server = http.createServer(async (req, res) => {
 
 server.headersTimeout = 15000;
 server.requestTimeout = 30000;
-server.listen(PORT, () => console.log(`SAEL site listening on http://localhost:${PORT}`));
+server.listen(PORT, process.env.SAEL_BIND_HOST || undefined, () => console.log(`SAEL site listening on http://localhost:${server.address().port}`));

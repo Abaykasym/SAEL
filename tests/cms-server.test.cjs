@@ -58,7 +58,7 @@ async function fixture(t) {
     queueMicrotask(() => request.end(buffer));
     if (!await cms.handle(request, response, new URL(url, origin).pathname)) { response.statusCode = 404; response.end(); }
     const text = response.body.toString(); let json; try { json = JSON.parse(text); } catch {}
-    return { status: response.statusCode, headers: response.headers, text, json };
+    return { status: response.statusCode, headers: response.headers, text, json, bytes: response.body };
   };
   state.loginResponse = response => { state.cookie = response.headers.get("set-cookie").split(";")[0]; state.csrf = response.json.csrfToken; };
   return state;
@@ -260,6 +260,31 @@ test("draft about/home bodies and unpublished section blocks are excluded from p
   assert.equal((await f.request("/api/admin/content", "PUT", snapshot)).status, 200);
   const response = await f.request("/api/cms/public"); assert.equal(response.status, 200);
   for (const text of ["Private company title", "Private company body", "Private hero body", "Private home section", "Private disabled section"]) assert(!response.text.includes(text), text);
+});
+
+test("public CMS snapshots support gzip and revalidation without delaying publication changes", async t => {
+  const f = await fixture(t);
+  const get = headers => f.request("/api/cms/public", "GET", undefined, headers);
+  const first = await get({ "Accept-Encoding": "gzip;q=0" });
+  assert.equal(first.headers.get("content-encoding"), null);
+  const tag = first.headers.get("etag");
+  assert.match(first.headers.get("cache-control"), /no-cache/);
+  const compressed = await get({ "Accept-Encoding": "br, gzip" });
+  assert.equal(compressed.headers.get("vary"), "Accept-Encoding");
+  assert.equal(compressed.headers.get("content-encoding"), "gzip");
+  assert.equal(compressed.headers.get("etag"), tag);
+  assert.deepEqual(require("node:zlib").gunzipSync(compressed.bytes), first.bytes);
+  const same = await get({ "If-None-Match": tag });
+  assert.equal(same.status, 304);
+  assert.equal(same.bytes.length, 0);
+  f.loginResponse(await f.request("/api/admin/setup", "POST", { token: process.env.CMS_SETUP_TOKEN, username: "editor", password: "password-for-fixture-only" }));
+  const snapshot = (await f.request("/api/admin/content")).json;
+  snapshot.content.pages[0].status = "draft";
+  assert.equal((await f.request("/api/admin/content", "PUT", snapshot)).status, 200);
+  const changed = await get({ "If-None-Match": tag });
+  assert.equal(changed.status, 200);
+  assert.notEqual(changed.headers.get("etag"), tag);
+  assert.equal(changed.json.content.pages.length, 0);
 });
 
 test("production requires HTTPS configuration and emits Secure cookie for configured public HTTPS origin", async t => {

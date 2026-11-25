@@ -138,7 +138,10 @@ Object.assign(copy.ru,{"contact.address":"724411, Кыргызская Респ�
 Object.assign(copy.kg,{"contact.address":"724411, Кыргыз Республикасы, Чүй облусу, Кара-Балта шаары, Калинин көчөсү, 2","contact.hoursLabel":"Иш убактысы","contact.hours":"Дүйшөмбү–Жума, 08:00–17:00","quality.body":"Аналитикалык маалыматтардын сапаты сертификатталган стандарттык үлгүлөр, ички контролдук материалдар жана лабораториялар аралык салыштыруулар менен камсыздалат.","quality.note":"Тандалган тапшырма үчүн аккредитация чөйрөсүн жана колдонулуучу методдорду тактаңыз.","equipment.intro":"Көп элементтүү талдоо, из концентрациялары жана экологиялык изилдөөлөр үчүн ICP-AES жана ICP-MS спектрометрлери.","equipment.note":"Метод жана аналитикалык параметрлер материалга жана кардардын тапшырмасына жараша тандалат.","partners.intro":"SAEL геологиялык чалгындоо, тоо-кен өнөр жайы жана өндүрүш тармактары менен иштейт.","form.fileNote":"10 МБга чейинки бир файл: PDF, XLS/XLSX, DOC/DOCX же ZIP.","footer.legal":"Stewart Assay and Environmental Laboratories LLC","brand.home":"SAEL — башкы бет","search.close":"Издөөнү жабуу"});
 Object.assign(copy.en,{"contact.address":"724411, Kyrgyz Republic, Chuy Region, Kara-Balta, 2 Kalinina Street","contact.hoursLabel":"Office hours","contact.hours":"Mon–Fri, 08:00–17:00","quality.body":"Certified reference materials, internal control samples and interlaboratory comparisons support the quality of analytical data.","quality.note":"Confirm the accreditation scope and applicable methods for your specific task.","equipment.intro":"ICP-AES and ICP-MS spectrometers for multi-element, trace-level and environmental analysis.","equipment.note":"Methods and analytical parameters are selected for the material and project objective.","partners.intro":"SAEL works with exploration, mining and industrial companies.","form.fileNote":"One file up to 10 MB: PDF, XLS/XLSX, DOC/DOCX or ZIP.","footer.legal":"Stewart Assay and Environmental Laboratories LLC","brand.home":"SAEL — home","search.close":"Close search"});
 
-for (const lang of ["ru","kg","en"]) Object.assign(copy[lang],{"stat.samplesValue":"350,000","stat.registrationValue":"1996","stat.openingValue":"1997"});
+for (const lang of ["ru","kg","en"]) {
+  Object.assign(copy[lang],{"stat.samplesValue":"350,000","stat.registrationValue":"1996","stat.openingValue":"1997"});
+  for (const [key, value] of Object.entries(window.saelQuoteText?.[lang] || {})) copy[lang]["rfq." + key] = value;
+}
 const services = [
   {id:"preparation",icon:"sample",category:"prep",name:{ru:"Пробоподготовка",kg:"Үлгүлөрдү даярдоо",en:"Sample preparation"},desc:{ru:"Приём, хранение и подготовка геологических проб по согласованной схеме.",kg:"Геологиялык үлгүлөрдү кабыл алуу, сактоо жана макулдашылган тартипте даярдоо.",en:"Receipt, storage and preparation of geological samples to an agreed procedure."},method:{ru:"Пакеты пробоподготовки и индивидуальные процедуры. Состав зависит от материала и дальнейшего анализа.",kg:"Үлгү даярдоо пакеттери жана өзүнчө процедуралар. Курамы материалга жана кийинки анализге жараша болот.",en:"Sample preparation packages and custom procedures. Scope depends on the material and subsequent analysis."},samples:{ru:"Геологические и технологические пробы; конкретный материал согласовать с лабораторией.",kg:"Геологиялык жана технологиялык үлгүлөр; материалды лаборатория менен тактоо керек.",en:"Geological and metallurgical samples; confirm the material with the laboratory."},requirements:{ru:"Массу, крупность, упаковку, маркировку и необходимость дробления или истирания уточнить до отправки.",kg:"Жөнөтүүдөн мурда массаны, өлчөмдү, таңгакты, маркировканы жана майдалоо зарылдыгын тактоо керек.",en:"Confirm mass, particle size, packaging, labelling and whether crushing or pulverizing is required before shipment."},result:{ru:"Подготовленная проба или согласованный пакет операций для последующего анализа.",kg:"Даярдалган үлгү же кийинки анализ үчүн макулдашылган операциялар пакети.",en:"A prepared sample or an agreed sequence of preparation steps for analysis."},material:{ru:"Геологические пробы · подготовка",kg:"Геологиялык үлгүлөр · даярдоо",en:"Geological samples · preparation"}},
   {id:"precious-metals",icon:"spark",category:"precious",name:{ru:"Драгоценные металлы",kg:"Баалуу металлдар",en:"Precious metals"},desc:{ru:"Анализ золота, серебра и металлов платиновой группы; выбор методики зависит от матрицы и задачи.",kg:"Алтынды, күмүштү жана платина тобундагы металлдарды анализдөө; метод үлгүнүн курамына жана тапшырмага жараша тандалат.",en:"Gold, silver and platinum group analysis; method selection depends on the matrix and project objective."},method:{ru:"На сайте SAEL описаны пробирный анализ, кислотное разложение и варианты цианидного выщелачивания. Конкретный пакет согласовать.",kg:"SAEL сайтында пробирдик анализ, кислотада ажыратуу жана цианид менен эритүү ыкмалары сүрөттөлгөн. Так пакет макулдашылат.",en:"SAEL describes fire assay, acid digestion and cyanide leach options. Confirm the specific package with the laboratory."},samples:{ru:"Руда, концентрат и другие минеральные материалы после подтверждения применимости.",kg:"Колдонууга ылайыктуулугу ырасталгандан кийин руда, концентрат жана башка минералдык материалдар.",en:"Ores, concentrates and other mineral materials, subject to method suitability."},requirements:{ru:"Для крупного золота, высокой концентрации или неоднородной пробы требуется отдельное согласование схемы анализа.",kg:"Ири алтын, жогорку концентрация же бир тектүү эмес үлгү үчүн анализ схемасын өзүнчө макулдашуу керек.",en:"Coarse gold, high grades or heterogeneous samples may require a separately agreed assay program."},result:{ru:"Результат анализа и сведения о применённой методике в согласованном формате.",kg:"Макулдашылган форматта анализдин жыйынтыгы жана колдонулган метод жөнүндө маалымат.",en:"An assay result and method information in the agreed reporting format."},material:{ru:"Руда / концентрат · пробирный анализ и другие методы",kg:"Руда / концентрат · пробирдик анализ жана башка методдор",en:"Ore / concentrate · fire assay and other methods"}},
@@ -157,126 +160,126 @@ const servicePhotos = {
   inspection: "assets/source-sael/photos/inspection.jpg"
 };
 
-const priceItem = (category, ru, kg, en, code, detail, amount) => ({
-  category, title:{ru,kg,en}, code, detail, amount
+const priceItem = (id, category, ru, kg, en, code, detail, amount) => ({
+  id, category, title:{ru,kg,en}, code, detail, amount
 });
 const priceEntries = [
   // Sample preparation
-  priceItem("prep","Пробоподготовка керна и породы, пакет P5a, 250 г","Керн жана тоо тектерин даярдоо, P5a пакети, 250 г","Core and rock preparation, P5a package, 250 g","P5a · 250 g","Dry crush to -2 mm · riffle split · pulverize to -75 µm; listed process variants at same rate","USD 6.30 + 1.00/kg"),
-  priceItem("prep","Пробоподготовка керна и породы, пакет P5a, 500 г","Керн жана тоо тектерин даярдоо, P5a пакети, 500 г","Core and rock preparation, P5a package, 500 g","P5a · 500 g","Dry crush · riffle split · pulverize to -75 µm","USD 6.80 + 1.00/kg"),
-  priceItem("prep","Пробоподготовка керна и породы, пакет P5a, 1 000 г","Керн жана тоо тектерин даярдоо, P5a пакети, 1 000 г","Core and rock preparation, P5a package, 1,000 g","P5a · 1,000 g","Dry crush · riffle split · pulverize to -75 µm","USD 7.20 + 1.00/kg"),
-  priceItem("prep","Пробоподготовка керна и породы, варианты P5a","Керн жана тоо тектерин даярдоо, P5a варианттары","Core and rock preparation, P5a variants","P5a* · P5a**","1,000 g variants with alternative crush / split thresholds","USD 6.80 + 1.00/kg"),
-  priceItem("prep","Дробление и истирание керна и породы, пакет P5b","Керн жана тоо тектерин майдалоо жана сүртүү, P5b пакети","Core and rock crushing and pulverizing, P5b","P5b","Dry crush to -2 mm · riffle split 250 g","USD 3.90 + 1.00/kg"),
-  priceItem("prep","Полная подготовка образца до 2 кг","2 кг чейин үлгүнү толук даярдоо","Full sample preparation up to 2 kg","P7","Crush to -5 mm · pulverize the entire sample","USD 11.40 + 2.00/kg"),
-  priceItem("prep","Подготовка почвы и осадков: просеивание и измельчение","Топуракты жана чөкмөнү даярдоо: элөө жана майдалоо","Soil and sediment preparation: screening and pulverizing","P2 · P4a–P4e","P2 $5.05; P4a $2.10; P4b $4.00; P4c $3.00; P4d $5.05; P4e $2.00 per sample","USD 2.00–5.05"),
-  priceItem("prep","Сушка образцов","Үлгүлөрдү кургатуу","Sample drying","P8–P10","P8 105°C $1.15 + $0.20/kg; P9 60°C $1.30 + $0.35/kg; P10 air-dry $1.65 + $0.40/kg","USD 1.15–1.65 + 0.20–0.40/kg"),
-  priceItem("prep","Дробление образцов","Үлгүлөрдү майдалоо","Sample crushing","P11 · P12 · P12/1 · P12/2","P11 to -5 mm $2.00 + $0.20/kg; P12 to -2 mm and P12/1 to -1 mm $1.80 + $0.20/kg; P12/2 ring mill to -1 mm $3.30 + $0.40/kg","USD 1.80–3.30 + 0.20–0.40/kg"),
-  priceItem("prep","Деление образцов","Үлгүлөрдү бөлүү","Sample splitting","P13–P16","Riffle $1.15 + $0.20/kg; quartering $1.05 + $0.20/kg; cone-and-ring, above 50 kg $84.05 + $1.70/kg; rotary splitter $1.65 + $0.35/kg","USD 1.05–84.05 + per kg"),
-  priceItem("prep","Измельчение до требуемой крупности","Керектүү майдалыкка чейин сүртүү","Pulverizing to specified fineness","P17–P20","-75 µm ≥90% $4.95; -75 µm ≥85% $4.50; -106 µm ≥90% $4.70; -180 µm ≥90% $4.30","USD 4.30–4.95"),
-  priceItem("prep","Дополнительные операции с образцами","Үлгүлөр менен кошумча операциялар","Additional sample preparation procedures","P1 · P3 · P6 · P21–P28","Homogenize $1.15; dry pulverize $3.75; 100 g dry pulverize $6.65; dry sieving $1.65–2.80 + $2.10–4.70/kg; compositing by request; duplicates $1.20–1.45 + $0.20–0.35/kg","USD 1.15–6.65; some by kg"),
-  priceItem("prep","Очистка дробилки между пробами","Үлгүлөрдүн ортосунда майдалагычты тазалоо","Crusher cleaning between samples","WSH-21 · WSA-22","Barren material cleaning / additional cleaning between mineralized samples","USD 3.85 / 5.05"),
-  priceItem("prep","Портативный XRF: индикативный анализ","Портативдүү XRF: индикативдик анализ","Portable XRF: indicative analysis","pXRF-30 · pXRF-34","pXRF-30 multi-element scan $7.70; pXRF-34 Si, Ti, Zr scan $5.80; complementary screening method","USD 5.80–7.70"),
+  priceItem("price-001","prep","Пробоподготовка керна и породы, пакет P5a, 250 г","Керн жана тоо тектерин даярдоо, P5a пакети, 250 г","Core and rock preparation, P5a package, 250 g","P5a · 250 g","Dry crush to -2 mm · riffle split · pulverize to -75 µm; listed process variants at same rate","USD 6.30 + 1.00/kg"),
+  priceItem("price-002","prep","Пробоподготовка керна и породы, пакет P5a, 500 г","Керн жана тоо тектерин даярдоо, P5a пакети, 500 г","Core and rock preparation, P5a package, 500 g","P5a · 500 g","Dry crush · riffle split · pulverize to -75 µm","USD 6.80 + 1.00/kg"),
+  priceItem("price-003","prep","Пробоподготовка керна и породы, пакет P5a, 1 000 г","Керн жана тоо тектерин даярдоо, P5a пакети, 1 000 г","Core and rock preparation, P5a package, 1,000 g","P5a · 1,000 g","Dry crush · riffle split · pulverize to -75 µm","USD 7.20 + 1.00/kg"),
+  priceItem("price-004","prep","Пробоподготовка керна и породы, варианты P5a","Керн жана тоо тектерин даярдоо, P5a варианттары","Core and rock preparation, P5a variants","P5a* · P5a**","1,000 g variants with alternative crush / split thresholds","USD 6.80 + 1.00/kg"),
+  priceItem("price-005","prep","Дробление и истирание керна и породы, пакет P5b","Керн жана тоо тектерин майдалоо жана сүртүү, P5b пакети","Core and rock crushing and pulverizing, P5b","P5b","Dry crush to -2 mm · riffle split 250 g","USD 3.90 + 1.00/kg"),
+  priceItem("price-006","prep","Полная подготовка образца до 2 кг","2 кг чейин үлгүнү толук даярдоо","Full sample preparation up to 2 kg","P7","Crush to -5 mm · pulverize the entire sample","USD 11.40 + 2.00/kg"),
+  priceItem("price-007","prep","Подготовка почвы и осадков: просеивание и измельчение","Топуракты жана чөкмөнү даярдоо: элөө жана майдалоо","Soil and sediment preparation: screening and pulverizing","P2 · P4a–P4e","P2 $5.05; P4a $2.10; P4b $4.00; P4c $3.00; P4d $5.05; P4e $2.00 per sample","USD 2.00–5.05"),
+  priceItem("price-008","prep","Сушка образцов","Үлгүлөрдү кургатуу","Sample drying","P8–P10","P8 105°C $1.15 + $0.20/kg; P9 60°C $1.30 + $0.35/kg; P10 air-dry $1.65 + $0.40/kg","USD 1.15–1.65 + 0.20–0.40/kg"),
+  priceItem("price-009","prep","Дробление образцов","Үлгүлөрдү майдалоо","Sample crushing","P11 · P12 · P12/1 · P12/2","P11 to -5 mm $2.00 + $0.20/kg; P12 to -2 mm and P12/1 to -1 mm $1.80 + $0.20/kg; P12/2 ring mill to -1 mm $3.30 + $0.40/kg","USD 1.80–3.30 + 0.20–0.40/kg"),
+  priceItem("price-010","prep","Деление образцов","Үлгүлөрдү бөлүү","Sample splitting","P13–P16","Riffle $1.15 + $0.20/kg; quartering $1.05 + $0.20/kg; cone-and-ring, above 50 kg $84.05 + $1.70/kg; rotary splitter $1.65 + $0.35/kg","USD 1.05–84.05 + per kg"),
+  priceItem("price-011","prep","Измельчение до требуемой крупности","Керектүү майдалыкка чейин сүртүү","Pulverizing to specified fineness","P17–P20","-75 µm ≥90% $4.95; -75 µm ≥85% $4.50; -106 µm ≥90% $4.70; -180 µm ≥90% $4.30","USD 4.30–4.95"),
+  priceItem("price-012","prep","Дополнительные операции с образцами","Үлгүлөр менен кошумча операциялар","Additional sample preparation procedures","P1 · P3 · P6 · P21–P28","Homogenize $1.15; dry pulverize $3.75; 100 g dry pulverize $6.65; dry sieving $1.65–2.80 + $2.10–4.70/kg; compositing by request; duplicates $1.20–1.45 + $0.20–0.35/kg","USD 1.15–6.65; some by kg"),
+  priceItem("price-013","prep","Очистка дробилки между пробами","Үлгүлөрдүн ортосунда майдалагычты тазалоо","Crusher cleaning between samples","WSH-21 · WSA-22","Barren material cleaning / additional cleaning between mineralized samples","USD 3.85 / 5.05"),
+  priceItem("price-014","prep","Портативный XRF: индикативный анализ","Портативдүү XRF: индикативдик анализ","Portable XRF: indicative analysis","pXRF-30 · pXRF-34","pXRF-30 multi-element scan $7.70; pXRF-34 Si, Ti, Zr scan $5.80; complementary screening method","USD 5.80–7.70"),
 
   // Precious metals
-  priceItem("precious","Золото: пробирный анализ, ICP-MS, 30 г","Алтын: ICP-MS менен пробирдик анализ, 30 г","Gold: fire assay, ICP-MS finish, 30 g","Au-ICP21","Ultra-trace · 0.001–10 ppm","USD 14.50"),
-  priceItem("precious","Золото: пробирный анализ, ICP-MS, 50 г","Алтын: ICP-MS менен пробирдик анализ, 50 г","Gold: fire assay, ICP-MS finish, 50 g","Au-ICP22","Ultra-trace · 0.001–10 ppm","USD 16.30"),
-  priceItem("precious","Золото: пробирный анализ, ICP-AES, 30 г","Алтын: ICP-AES менен пробирдик анализ, 30 г","Gold: fire assay, ICP-AES finish, 30 g","Au1","Ultra-trace · 0.002–10 ppm","USD 13.80"),
-  priceItem("precious","Золото: пробирный анализ, ICP-AES, 50 г","Алтын: ICP-AES менен пробирдик анализ, 50 г","Gold: fire assay, ICP-AES finish, 50 g","Au1-50","Ultra-trace · 0.002–10 ppm","USD 15.50"),
-  priceItem("precious","Золото: пробирный анализ с атомно-абсорбционным окончанием, 30 г","Алтын: атомдук-абсорбциялык аяктоо менен пробирдик анализ, 30 г","Gold: fire assay with AAS finish, 30 g","Au-AA23","Trace · 0.005–10 ppm","USD 13.00"),
-  priceItem("precious","Золото: пробирный анализ с атомно-абсорбционным окончанием, 50 г","Алтын: атомдук-абсорбциялык аяктоо менен пробирдик анализ, 50 г","Gold: fire assay with AAS finish, 50 g","Au-AA24","Trace · 0.005–10 ppm","USD 14.65"),
-  priceItem("precious","Золото: пробирный анализ, 30 г","Алтын: пробирдик анализ, 30 г","Gold: fire assay, 30 g","Au3","Trace · 0.010–10 ppm · AAS finish","USD 12.30"),
-  priceItem("precious","Золото: пробирный анализ, 50 г","Алтын: пробирдик анализ, 50 г","Gold: fire assay, 50 g","Au3-50","Trace · 0.010–10 ppm · AAS finish","USD 13.80"),
-  priceItem("precious","Золото: рудный диапазон, 30 г","Алтын: руда диапазону, 30 г","Gold: ore-grade assay, 30 g","Au-AA25","0.010–100 ppm · AAS finish","USD 12.30"),
-  priceItem("precious","Золото: рудный диапазон, 50 г","Алтын: руда диапазону, 50 г","Gold: ore-grade assay, 50 g","Au-AA26","0.010–100 ppm · AAS finish","USD 13.80"),
-  priceItem("precious","Золото: рудный диапазон, 30 г","Алтын: руда диапазону, 30 г","Gold: ore-grade assay, 30 g","Au4","0.05–100 ppm · AAS finish","USD 12.30"),
-  priceItem("precious","Золото: рудный диапазон, 50 г","Алтын: руда диапазону, 50 г","Gold: ore-grade assay, 50 g","Au4-50","0.05–100 ppm · AAS finish","USD 13.80"),
-  priceItem("precious","Золото: гравиметрическое окончание, 30 г","Алтын: гравиметриялык аяктоо, 30 г","Gold: gravimetric finish, 30 g","Au5","Ore grade · 0.5–500 ppm","USD 13.80"),
-  priceItem("precious","Золото: гравиметрическое окончание, 50 г","Алтын: гравиметриялык аяктоо, 50 г","Gold: gravimetric finish, 50 g","Au5-50","Ore grade · 0.5–500 ppm","USD 15.50"),
-  priceItem("precious","Золото: ситовой пробирный анализ 1 кг с подготовкой","Алтын: даярдоо менен 1 кг ситалык пробирдик анализ","Gold: 1 kg screen fire assay with preparation","Au7","Wet screen to 75 µm · duplicate undersize assays · oversize assay · plus/minus fractions","USD 51.05"),
-  priceItem("precious","Золото: ситовой пробирный анализ подготовленной пробы 1 кг","Алтын: даярдалган 1 кг үлгүнүн ситалык пробирдик анализи","Gold: screen fire assay on prepared 1 kg sample","Au8","Prepared to 75 µm · screen assay","USD 43.70"),
-  priceItem("precious","Золото: цианидное выщелачивание BLEG, ICP-MS","Алтын: ICP-MS менен BLEG цианиддик эритүү","Gold: BLEG cyanide leach, ICP-MS finish","Au9","Ultra-trace · 1,000–3,000 g nominal sample weight","USD 43.60"),
-  priceItem("precious","Золото в растворе: цианидное выщелачивание, ICP-AES","Эритмедеги алтын: ICP-AES менен цианиддик эритүү","Gold in liquor: cyanide leach, ICP-AES","Au10","Trace · 1,000 g nominal sample weight","USD 34.30"),
-  priceItem("precious","Золото в растворе: цианидное выщелачивание, 500 г","Эритмедеги алтын: цианиддик эритүү, 500 г","Gold in liquor: cyanide leach, 500 g","Au11","Ore grade · AAS or ICP-AES finish","USD 30.55"),
-  priceItem("precious","Золото в растворе: цианидное выщелачивание, 1 кг","Эритмедеги алтын: цианиддик эритүү, 1 кг","Gold in liquor: cyanide leach, 1 kg","Au12","Ore grade · AAS or ICP-AES finish","USD 33.50"),
-  priceItem("precious","Золото: ускоренное цианидное выщелачивание","Алтын: тездетилген цианиддик эритүү","Gold: accelerated cyanide leach","Au13","Leachwell reagent · ICP-AES solution finish · 1,000 g","USD 38.90"),
-  priceItem("precious","Серебро: aqua regia, следовой уровень","Күмүш: aqua regia, из деңгээли","Silver: aqua regia, trace level","Ag1","0.5–10 ppm · AA finish","USD 13.80"),
-  priceItem("precious","Серебро: много кислот, следовой уровень","Күмүш: көп кислота, из деңгээли","Silver: multi-acid digestion, trace level","Ag2","0.5–10 ppm · AA finish","USD 10.70"),
-  priceItem("precious","Серебро: aqua regia, рудный диапазон","Күмүш: aqua regia, руда диапазону","Silver: aqua regia, ore grade","Ag3","1–100 ppm · AA finish","USD 5.80"),
-  priceItem("precious","Серебро: много кислот, рудный диапазон","Күмүш: көп кислота, руда диапазону","Silver: multi-acid digestion, ore grade","Ag4","1–100 ppm · AA finish","USD 9.15"),
-  priceItem("precious","Серебро: aqua regia, высокий диапазон","Күмүш: aqua regia, жогорку диапазон","Silver: aqua regia, high range","Ag5","10–1,000 ppm · AA finish","USD 9.60"),
-  priceItem("precious","Серебро: много кислот, высокий диапазон","Күмүш: көп кислота, жогорку диапазон","Silver: multi-acid digestion, high range","Ag6","10–1,000 ppm · AA finish","USD 11.60"),
-  priceItem("precious","Платина, палладий и золото: следовой уровень, 30 г","Платина, палладий жана алтын: из деңгээли, 30 г","Platinum, palladium and gold: trace level, 30 g","PGM1","Fire assay · ICP-AES","USD 19.80 or 14.50 + 2.65/element"),
-  priceItem("precious","Платина, палладий и золото: следовой уровень, 50 г","Платина, палладий жана алтын: из деңгээли, 50 г","Platinum, palladium and gold: trace level, 50 g","PGM1-50","Fire assay · ICP-AES","USD 22.80 or 16.80 + 3.05/element"),
-  priceItem("precious","Платина, палладий и золото: рудный диапазон, 30 г","Платина, палладий жана алтын: руда диапазону, 30 г","Platinum, palladium and gold: ore grade, 30 g","PGM2","Fire assay · ICP-AES","USD 21.00 or 15.40 + 2.80/element"),
-  priceItem("precious","Платина, палладий и золото: рудный диапазон, 50 г","Платина, палладий жана алтын: руда диапазону, 50 г","Platinum, palladium and gold: ore grade, 50 g","PGM2-50","Fire assay · ICP-AES","USD 24.15 or 17.70 + 3.20/element"),
+  priceItem("price-015","precious","Золото: пробирный анализ, ICP-MS, 30 г","Алтын: ICP-MS менен пробирдик анализ, 30 г","Gold: fire assay, ICP-MS finish, 30 g","Au-ICP21","Ultra-trace · 0.001–10 ppm","USD 14.50"),
+  priceItem("price-016","precious","Золото: пробирный анализ, ICP-MS, 50 г","Алтын: ICP-MS менен пробирдик анализ, 50 г","Gold: fire assay, ICP-MS finish, 50 g","Au-ICP22","Ultra-trace · 0.001–10 ppm","USD 16.30"),
+  priceItem("price-017","precious","Золото: пробирный анализ, ICP-AES, 30 г","Алтын: ICP-AES менен пробирдик анализ, 30 г","Gold: fire assay, ICP-AES finish, 30 g","Au1","Ultra-trace · 0.002–10 ppm","USD 13.80"),
+  priceItem("price-018","precious","Золото: пробирный анализ, ICP-AES, 50 г","Алтын: ICP-AES менен пробирдик анализ, 50 г","Gold: fire assay, ICP-AES finish, 50 g","Au1-50","Ultra-trace · 0.002–10 ppm","USD 15.50"),
+  priceItem("price-019","precious","Золото: пробирный анализ с атомно-абсорбционным окончанием, 30 г","Алтын: атомдук-абсорбциялык аяктоо менен пробирдик анализ, 30 г","Gold: fire assay with AAS finish, 30 g","Au-AA23","Trace · 0.005–10 ppm","USD 13.00"),
+  priceItem("price-020","precious","Золото: пробирный анализ с атомно-абсорбционным окончанием, 50 г","Алтын: атомдук-абсорбциялык аяктоо менен пробирдик анализ, 50 г","Gold: fire assay with AAS finish, 50 g","Au-AA24","Trace · 0.005–10 ppm","USD 14.65"),
+  priceItem("price-021","precious","Золото: пробирный анализ, 30 г","Алтын: пробирдик анализ, 30 г","Gold: fire assay, 30 g","Au3","Trace · 0.010–10 ppm · AAS finish","USD 12.30"),
+  priceItem("price-022","precious","Золото: пробирный анализ, 50 г","Алтын: пробирдик анализ, 50 г","Gold: fire assay, 50 g","Au3-50","Trace · 0.010–10 ppm · AAS finish","USD 13.80"),
+  priceItem("price-023","precious","Золото: рудный диапазон, 30 г","Алтын: руда диапазону, 30 г","Gold: ore-grade assay, 30 g","Au-AA25","0.010–100 ppm · AAS finish","USD 12.30"),
+  priceItem("price-024","precious","Золото: рудный диапазон, 50 г","Алтын: руда диапазону, 50 г","Gold: ore-grade assay, 50 g","Au-AA26","0.010–100 ppm · AAS finish","USD 13.80"),
+  priceItem("price-025","precious","Золото: рудный диапазон, 30 г","Алтын: руда диапазону, 30 г","Gold: ore-grade assay, 30 g","Au4","0.05–100 ppm · AAS finish","USD 12.30"),
+  priceItem("price-026","precious","Золото: рудный диапазон, 50 г","Алтын: руда диапазону, 50 г","Gold: ore-grade assay, 50 g","Au4-50","0.05–100 ppm · AAS finish","USD 13.80"),
+  priceItem("price-027","precious","Золото: гравиметрическое окончание, 30 г","Алтын: гравиметриялык аяктоо, 30 г","Gold: gravimetric finish, 30 g","Au5","Ore grade · 0.5–500 ppm","USD 13.80"),
+  priceItem("price-028","precious","Золото: гравиметрическое окончание, 50 г","Алтын: гравиметриялык аяктоо, 50 г","Gold: gravimetric finish, 50 g","Au5-50","Ore grade · 0.5–500 ppm","USD 15.50"),
+  priceItem("price-029","precious","Золото: ситовой пробирный анализ 1 кг с подготовкой","Алтын: даярдоо менен 1 кг ситалык пробирдик анализ","Gold: 1 kg screen fire assay with preparation","Au7","Wet screen to 75 µm · duplicate undersize assays · oversize assay · plus/minus fractions","USD 51.05"),
+  priceItem("price-030","precious","Золото: ситовой пробирный анализ подготовленной пробы 1 кг","Алтын: даярдалган 1 кг үлгүнүн ситалык пробирдик анализи","Gold: screen fire assay on prepared 1 kg sample","Au8","Prepared to 75 µm · screen assay","USD 43.70"),
+  priceItem("price-031","precious","Золото: цианидное выщелачивание BLEG, ICP-MS","Алтын: ICP-MS менен BLEG цианиддик эритүү","Gold: BLEG cyanide leach, ICP-MS finish","Au9","Ultra-trace · 1,000–3,000 g nominal sample weight","USD 43.60"),
+  priceItem("price-032","precious","Золото в растворе: цианидное выщелачивание, ICP-AES","Эритмедеги алтын: ICP-AES менен цианиддик эритүү","Gold in liquor: cyanide leach, ICP-AES","Au10","Trace · 1,000 g nominal sample weight","USD 34.30"),
+  priceItem("price-033","precious","Золото в растворе: цианидное выщелачивание, 500 г","Эритмедеги алтын: цианиддик эритүү, 500 г","Gold in liquor: cyanide leach, 500 g","Au11","Ore grade · AAS or ICP-AES finish","USD 30.55"),
+  priceItem("price-034","precious","Золото в растворе: цианидное выщелачивание, 1 кг","Эритмедеги алтын: цианиддик эритүү, 1 кг","Gold in liquor: cyanide leach, 1 kg","Au12","Ore grade · AAS or ICP-AES finish","USD 33.50"),
+  priceItem("price-035","precious","Золото: ускоренное цианидное выщелачивание","Алтын: тездетилген цианиддик эритүү","Gold: accelerated cyanide leach","Au13","Leachwell reagent · ICP-AES solution finish · 1,000 g","USD 38.90"),
+  priceItem("price-036","precious","Серебро: aqua regia, следовой уровень","Күмүш: aqua regia, из деңгээли","Silver: aqua regia, trace level","Ag1","0.5–10 ppm · AA finish","USD 13.80"),
+  priceItem("price-037","precious","Серебро: много кислот, следовой уровень","Күмүш: көп кислота, из деңгээли","Silver: multi-acid digestion, trace level","Ag2","0.5–10 ppm · AA finish","USD 10.70"),
+  priceItem("price-038","precious","Серебро: aqua regia, рудный диапазон","Күмүш: aqua regia, руда диапазону","Silver: aqua regia, ore grade","Ag3","1–100 ppm · AA finish","USD 5.80"),
+  priceItem("price-039","precious","Серебро: много кислот, рудный диапазон","Күмүш: көп кислота, руда диапазону","Silver: multi-acid digestion, ore grade","Ag4","1–100 ppm · AA finish","USD 9.15"),
+  priceItem("price-040","precious","Серебро: aqua regia, высокий диапазон","Күмүш: aqua regia, жогорку диапазон","Silver: aqua regia, high range","Ag5","10–1,000 ppm · AA finish","USD 9.60"),
+  priceItem("price-041","precious","Серебро: много кислот, высокий диапазон","Күмүш: көп кислота, жогорку диапазон","Silver: multi-acid digestion, high range","Ag6","10–1,000 ppm · AA finish","USD 11.60"),
+  priceItem("price-042","precious","Платина, палладий и золото: следовой уровень, 30 г","Платина, палладий жана алтын: из деңгээли, 30 г","Platinum, palladium and gold: trace level, 30 g","PGM1","Fire assay · ICP-AES","USD 19.80 or 14.50 + 2.65/element"),
+  priceItem("price-043","precious","Платина, палладий и золото: следовой уровень, 50 г","Платина, палладий жана алтын: из деңгээли, 50 г","Platinum, palladium and gold: trace level, 50 g","PGM1-50","Fire assay · ICP-AES","USD 22.80 or 16.80 + 3.05/element"),
+  priceItem("price-044","precious","Платина, палладий и золото: рудный диапазон, 30 г","Платина, палладий жана алтын: руда диапазону, 30 г","Platinum, palladium and gold: ore grade, 30 g","PGM2","Fire assay · ICP-AES","USD 21.00 or 15.40 + 2.80/element"),
+  priceItem("price-045","precious","Платина, палладий и золото: рудный диапазон, 50 г","Платина, палладий жана алтын: руда диапазону, 50 г","Platinum, palladium and gold: ore grade, 50 g","PGM2-50","Fire assay · ICP-AES","USD 24.15 or 17.70 + 3.20/element"),
 
   // Multi-element and related geochemical assays
-  priceItem("multi","46 элементов: aqua regia, ICP-MS / ICP-AES","46 элемент: aqua regia, ICP-MS / ICP-AES","46 elements: aqua regia, ICP-MS / ICP-AES","AR/UT","Ultra-trace exploration package · 1 g minimum","USD 21.85 or 7.25 + 1.05/element"),
-  priceItem("multi","46 элементов: четыре кислоты, ICP-MS / ICP-AES","46 элемент: төрт кислота, ICP-MS / ICP-AES","46 elements: four-acid digestion, ICP-MS / ICP-AES","MA/UT","Ultra-trace","USD 29.05 or 9.10 + 1.15/element"),
-  priceItem("multi","36 элементов: aqua regia, ICP-AES","36 элемент: aqua regia, ICP-AES","36 elements: aqua regia, ICP-AES","AR/ES/G","Geochemistry suite","USD 12.10 or 5.05 + 0.95/element"),
-  priceItem("multi","37 элементов: четыре кислоты, ICP-MS / ICP-AES","37 элемент: төрт кислота, ICP-MS / ICP-AES","37 elements: four-acid digestion, ICP-MS / ICP-AES","MA/ES/G","Geochemistry suite","USD 16.10 or 7.20 + 1.05/element"),
-  priceItem("multi","Индивидуальные элементы: aqua regia, ICP-AES","Өзүнчө элементтер: aqua regia, ICP-AES","Individual elements: aqua regia, ICP-AES","AR/BM/L","Ag, As, Co, Cu, Ni, Pb, Zn · $9.60 or $5.05 + $0.95/element","USD 9.60 or per element"),
-  priceItem("multi","36 элементов для низкосортного материала","Төмөн сорттогу материал үчүн 36 элемент","36 elements for low-grade mineralized material","AR/ES/H","Aqua regia · ICP-AES · $16.40 or $6.00 + $0.95/element","USD 16.40 or per element"),
-  priceItem("multi","Индивидуальные элементы для низкосортного материала","Төмөн сорттогу материал үчүн өзүнчө элементтер","Individual elements for low-grade material","AR/BM/H","Ag, As, Co, Cu, Ni, Pb, Zn · $10.30 or $5.90 + $1.30/element","USD 10.30 or per element"),
-  priceItem("multi","37 элементов: четыре кислоты для низкосортного материала","Төмөн сорттогу материал үчүн төрт кислота менен 37 элемент","37 elements: four-acid digestion for low-grade material","MA/ES/H","ICP-AES · $19.80 or $8.90 + $1.05/element","USD 19.80 or per element"),
-  priceItem("multi","28 элементов: сплавление боратом лития","28 элемент: литий борат менен эритүү","28 elements: lithium borate fusion","BF/ES/MS","Lithium metaborate/tetraborate fusion · ICP-AES / ICP-MS · $36.45 or $9.85 + $1.15/element","USD 36.45 or per element"),
-  priceItem("multi","Сера и углерод: LECO и гравиметрические методы","Күкүрт жана көмүртек: LECO жана гравиметриялык методдор","Sulphur and carbon: LECO and gravimetric methods","SE/S1–SE/C11","Total S $11.50–16.40; sulphide/sulphate S $9.15–27.70; total/organic/inorganic C $11.50–27.70; total S+C $21.10","USD 9.15–27.70"),
-  priceItem("multi","Медь: aqua regia, много кислот, выщелачивание","Жез: aqua regia, көп кислота, эритүү","Copper: aqua regia, multi-acid and leach methods","SE/Cu1–SE/Cu5","Aqua regia $8.30; multi-acid $10.10; sulphuric leach $11.10; cyanide leach $11.40; sequential assay $27.50","USD 8.30–27.50"),
-  priceItem("multi","Полные силикатные анализы методом XRF после сплавления","Эритүүдөн кийин XRF менен толук силикат анализи","Whole-rock XRF after lithium borate fusion","BF/XRF26","Major oxides","USD 32.75 or 15.40 + 1.65/element"),
-  priceItem("multi","Физические параметры: плотность, потери при прокаливании, влажность","Физикалык параметрлер: тыгыздык, күйгүзүүдөгү жоготуу, нымдуулук","Physical parameters: specific gravity, LOI and moisture","SE/SG1 · SE/SG2 · SE/LOI · SE/MC","Specific gravity cores/rocks $11.50; pulps $16.40; LOI $9.00; moisture $8.30","USD 8.30–16.40"),
+  priceItem("price-046","multi","46 элементов: aqua regia, ICP-MS / ICP-AES","46 элемент: aqua regia, ICP-MS / ICP-AES","46 elements: aqua regia, ICP-MS / ICP-AES","AR/UT","Ultra-trace exploration package · 1 g minimum","USD 21.85 or 7.25 + 1.05/element"),
+  priceItem("price-047","multi","46 элементов: четыре кислоты, ICP-MS / ICP-AES","46 элемент: төрт кислота, ICP-MS / ICP-AES","46 elements: four-acid digestion, ICP-MS / ICP-AES","MA/UT","Ultra-trace","USD 29.05 or 9.10 + 1.15/element"),
+  priceItem("price-048","multi","36 элементов: aqua regia, ICP-AES","36 элемент: aqua regia, ICP-AES","36 elements: aqua regia, ICP-AES","AR/ES/G","Geochemistry suite","USD 12.10 or 5.05 + 0.95/element"),
+  priceItem("price-049","multi","37 элементов: четыре кислоты, ICP-MS / ICP-AES","37 элемент: төрт кислота, ICP-MS / ICP-AES","37 elements: four-acid digestion, ICP-MS / ICP-AES","MA/ES/G","Geochemistry suite","USD 16.10 or 7.20 + 1.05/element"),
+  priceItem("price-050","multi","Индивидуальные элементы: aqua regia, ICP-AES","Өзүнчө элементтер: aqua regia, ICP-AES","Individual elements: aqua regia, ICP-AES","AR/BM/L","Ag, As, Co, Cu, Ni, Pb, Zn · $9.60 or $5.05 + $0.95/element","USD 9.60 or per element"),
+  priceItem("price-051","multi","36 элементов для низкосортного материала","Төмөн сорттогу материал үчүн 36 элемент","36 elements for low-grade mineralized material","AR/ES/H","Aqua regia · ICP-AES · $16.40 or $6.00 + $0.95/element","USD 16.40 or per element"),
+  priceItem("price-052","multi","Индивидуальные элементы для низкосортного материала","Төмөн сорттогу материал үчүн өзүнчө элементтер","Individual elements for low-grade material","AR/BM/H","Ag, As, Co, Cu, Ni, Pb, Zn · $10.30 or $5.90 + $1.30/element","USD 10.30 or per element"),
+  priceItem("price-053","multi","37 элементов: четыре кислоты для низкосортного материала","Төмөн сорттогу материал үчүн төрт кислота менен 37 элемент","37 elements: four-acid digestion for low-grade material","MA/ES/H","ICP-AES · $19.80 or $8.90 + $1.05/element","USD 19.80 or per element"),
+  priceItem("price-054","multi","28 элементов: сплавление боратом лития","28 элемент: литий борат менен эритүү","28 elements: lithium borate fusion","BF/ES/MS","Lithium metaborate/tetraborate fusion · ICP-AES / ICP-MS · $36.45 or $9.85 + $1.15/element","USD 36.45 or per element"),
+  priceItem("price-055","multi","Сера и углерод: LECO и гравиметрические методы","Күкүрт жана көмүртек: LECO жана гравиметриялык методдор","Sulphur and carbon: LECO and gravimetric methods","SE/S1–SE/C11","Total S $11.50–16.40; sulphide/sulphate S $9.15–27.70; total/organic/inorganic C $11.50–27.70; total S+C $21.10","USD 9.15–27.70"),
+  priceItem("price-056","multi","Медь: aqua regia, много кислот, выщелачивание","Жез: aqua regia, көп кислота, эритүү","Copper: aqua regia, multi-acid and leach methods","SE/Cu1–SE/Cu5","Aqua regia $8.30; multi-acid $10.10; sulphuric leach $11.10; cyanide leach $11.40; sequential assay $27.50","USD 8.30–27.50"),
+  priceItem("price-057","multi","Полные силикатные анализы методом XRF после сплавления","Эритүүдөн кийин XRF менен толук силикат анализи","Whole-rock XRF after lithium borate fusion","BF/XRF26","Major oxides","USD 32.75 or 15.40 + 1.65/element"),
+  priceItem("price-058","multi","Физические параметры: плотность, потери при прокаливании, влажность","Физикалык параметрлер: тыгыздык, күйгүзүүдөгү жоготуу, нымдуулук","Physical parameters: specific gravity, LOI and moisture","SE/SG1 · SE/SG2 · SE/LOI · SE/MC","Specific gravity cores/rocks $11.50; pulps $16.40; LOI $9.00; moisture $8.30","USD 8.30–16.40"),
 
   // Uranium analysis in environmental and biological materials
-  priceItem("environment","Уран в природной и грунтовой воде","Табигый жана жер астындагы суудагы уран","Uranium in natural and groundwater","U1","ICP-MS · detection limit 0.0001 ppm","USD 33.05"),
-  priceItem("environment","Уран в почве, осадках и пустой породе: aqua regia","Топуракта, чөкмөдө жана бош тектеги уран: aqua regia","Uranium in soil, sediment and waste rock: aqua regia","U2","ICP-MS · detection limit 0.001 ppm","USD 60.40"),
-  priceItem("environment","Уран в почве и породе: четыре кислоты","Топурактагы жана тоо тегиндеги уран: төрт кислота","Uranium in soil and rock: four-acid digestion","U3","ICP-MS · detection limit 0.05 ppm","USD 66.95"),
-  priceItem("environment","Уран в почве и породе: сплавление боратом лития","Топурактагы жана тоо тегиндеги уран: литий борат менен эритүү","Uranium in soil and rock: lithium borate fusion","U4","ICP-MS · detection limit 1 ppm","USD 81.00"),
-  priceItem("environment","Уран в растительности","Өсүмдүктөрдөгү уран","Uranium in vegetation","U5","Microwave digestion · ICP-MS · detection limit 0.01 ppm","USD 66.70"),
-  priceItem("environment","Уран в моче","Заарадагы уран","Uranium in urine","U6","Microwave digestion · ICP-MS · detection limit 0.005 ppm","USD 78.30"),
-  priceItem("environment","Уран в крови или тканях","Кандагы же ткандардагы уран","Uranium in blood or tissue","U7 · U8","Microwave digestion · ICP-MS","По запросу"),
+  priceItem("price-059","environment","Уран в природной и грунтовой воде","Табигый жана жер астындагы суудагы уран","Uranium in natural and groundwater","U1","ICP-MS · detection limit 0.0001 ppm","USD 33.05"),
+  priceItem("price-060","environment","Уран в почве, осадках и пустой породе: aqua regia","Топуракта, чөкмөдө жана бош тектеги уран: aqua regia","Uranium in soil, sediment and waste rock: aqua regia","U2","ICP-MS · detection limit 0.001 ppm","USD 60.40"),
+  priceItem("price-061","environment","Уран в почве и породе: четыре кислоты","Топурактагы жана тоо тегиндеги уран: төрт кислота","Uranium in soil and rock: four-acid digestion","U3","ICP-MS · detection limit 0.05 ppm","USD 66.95"),
+  priceItem("price-062","environment","Уран в почве и породе: сплавление боратом лития","Топурактагы жана тоо тегиндеги уран: литий борат менен эритүү","Uranium in soil and rock: lithium borate fusion","U4","ICP-MS · detection limit 1 ppm","USD 81.00"),
+  priceItem("price-063","environment","Уран в растительности","Өсүмдүктөрдөгү уран","Uranium in vegetation","U5","Microwave digestion · ICP-MS · detection limit 0.01 ppm","USD 66.70"),
+  priceItem("price-064","environment","Уран в моче","Заарадагы уран","Uranium in urine","U6","Microwave digestion · ICP-MS · detection limit 0.005 ppm","USD 78.30"),
+  priceItem("price-065","environment","Уран в крови или тканях","Кандагы же ткандардагы уран","Uranium in blood or tissue","U7 · U8","Microwave digestion · ICP-MS","По запросу"),
 
   // Metallurgy
-  priceItem("metallurgy","Золото в активированном угле","Активдештирилген көмүрдөгү алтын","Gold in activated carbon","Au-AA44","Ashing · aqua regia digestion · AAS finish","USD 32.80"),
-  priceItem("metallurgy","Серебро в активированном угле","Активдештирилген көмүрдөгү күмүш","Silver in activated carbon","Ag-AA44","Ashing · aqua regia digestion · AAS finish","USD 32.80"),
-  priceItem("metallurgy","Элементы в активированном угле","Активдештирилген көмүрдөгү элементтер","Elements in activated carbon","M3","Bi, Pb, Sb, Se, Te, Cd, Be, Fe, Cu, Ni, Zn · ICP-AES","USD 57.30"),
-  priceItem("metallurgy","Кальций в активированном угле","Активдештирилген көмүрдөгү кальций","Calcium in activated carbon","M4","Acid extraction · ICP-AES scan","USD 8.20"),
-  priceItem("metallurgy","Кинетика сорбции золота углём, упрощённый тест","Көмүргө алтындын сорбция кинетикасы, жөнөкөйлөтүлгөн тест","Gold adsorption kinetics on carbon, simplified test","M5","2-hour test · solution analysis · gold recovery","USD 42.55"),
-  priceItem("metallurgy","Кинетика сорбции золота углём","Көмүргө алтындын сорбция кинетикасы","Gold adsorption kinetics on carbon","M6","Determination of semi-recovery time in liquor","USD 57.30"),
-  priceItem("metallurgy","Индекс истирания активированного угля","Активдештирилген көмүрдүн сүрүлүү индекси","Activated carbon abrasion index","M7","Perforated bowl test · carbon fines measurement","USD 24.60"),
-  priceItem("metallurgy","Кажущаяся плотность активированного угля","Активдештирилген көмүрдүн көрүнгөн тыгыздыгы","Apparent density of activated carbon","M8","Calibrated volume method","USD 20.55"),
-  priceItem("metallurgy","Влажность активированного угля","Активдештирилген көмүрдүн нымдуулугу","Activated carbon moisture","M9","Gravimetric method · 0.01–30%","USD 6.95"),
-  priceItem("metallurgy","Золото в концентрате","Концентраттагы алтын","Gold in concentrate","M10","Fire assay · gravimetric finish · 10–30 g","USD 73.80"),
-  priceItem("metallurgy","Многоэлементный анализ концентрата","Концентратты көп элементтүү анализдөө","Multi-element concentrate assay","M11","Aqua regia · ICP-AES","USD 16.90 or 6.55 + 1.65/element"),
-  priceItem("metallurgy","Золото в слитке","Куймадагы алтын","Gold in bullion","M12","Fire assay · gravimetric finish","USD 131.55"),
-  priceItem("metallurgy","Серебро в слитке","Куймадагы күмүш","Silver in bullion","M13","Fire assay · gravimetric finish","USD 131.55"),
-  priceItem("metallurgy","Примеси в слитках","Куймадагы кошулмалар","Impurities in bullion","M14","Aqua regia digestion · ICP-AES · multi-element","USD 74.00"),
-  priceItem("metallurgy","Золото в цианидном растворе","Цианид эритмесиндеги алтын","Gold in cyanide liquor","M15","ICP-AES","USD 8.20"),
-  priceItem("metallurgy","Серебро в цианидном растворе","Цианид эритмесиндеги күмүш","Silver in cyanide liquor","M15","ICP-AES","USD 4.50"),
-  priceItem("metallurgy","Элементы в цианидном растворе","Цианид эритмесиндеги элементтер","Elements in cyanide liquor","M16","Multi-element ICP-AES","USD 16.30 or 8.20 + 1.65/element"),
-  priceItem("metallurgy","34 элемента в цианидном растворе","Цианид эритмесиндеги 34 элемент","34 elements in cyanide liquor","M17","ICP-AES","USD 49.05 or 8.20 + 1.65/element"),
-  priceItem("metallurgy","Золото в кислотном растворе","Кислота эритмесиндеги алтын","Gold in acid liquor","M18","ICP-AES","USD 8.60"),
-  priceItem("metallurgy","Серебро в кислотном растворе","Кислота эритмесиндеги күмүш","Silver in acid liquor","M18","ICP-AES","USD 4.80"),
-  priceItem("metallurgy","Элементы в кислотном растворе","Кислота эритмесиндеги элементтер","Elements in acid liquor","M19","Multi-element ICP-AES","USD 15.45 or 6.10 + 1.80/element"),
-  priceItem("metallurgy","34 элемента в кислотном растворе","Кислота эритмесиндеги 34 элемент","34 elements in acid liquor","M20","ICP-AES","USD 48.20 or 6.90 + 1.80/element"),
-  priceItem("metallurgy","Программа бутылочного выщелачивания","Бөтөлкөдө эритүү программасы","Bottle-roll leaching test program","BR","Man-day $150 · complete program including report, price depends on approved scope","USD 6,700–11,780*"),
-  priceItem("metallurgy","Колонное выщелачивание","Колонкада эритүү","Column leaching test","","Man-day $150 · whole test program including report · final scope and price agreed after program approval","USD 11,550–23,000*"),
-  priceItem("metallurgy","Флотационные и гравитационные испытания","Флотациялык жана гравитациялык сыноолор","Flotation and gravity concentration tests","","Laboratory flotation · Knelson gravity concentration · price set after agreeing the test program","По запросу"),
+  priceItem("price-066","metallurgy","Золото в активированном угле","Активдештирилген көмүрдөгү алтын","Gold in activated carbon","Au-AA44","Ashing · aqua regia digestion · AAS finish","USD 32.80"),
+  priceItem("price-067","metallurgy","Серебро в активированном угле","Активдештирилген көмүрдөгү күмүш","Silver in activated carbon","Ag-AA44","Ashing · aqua regia digestion · AAS finish","USD 32.80"),
+  priceItem("price-068","metallurgy","Элементы в активированном угле","Активдештирилген көмүрдөгү элементтер","Elements in activated carbon","M3","Bi, Pb, Sb, Se, Te, Cd, Be, Fe, Cu, Ni, Zn · ICP-AES","USD 57.30"),
+  priceItem("price-069","metallurgy","Кальций в активированном угле","Активдештирилген көмүрдөгү кальций","Calcium in activated carbon","M4","Acid extraction · ICP-AES scan","USD 8.20"),
+  priceItem("price-070","metallurgy","Кинетика сорбции золота углём, упрощённый тест","Көмүргө алтындын сорбция кинетикасы, жөнөкөйлөтүлгөн тест","Gold adsorption kinetics on carbon, simplified test","M5","2-hour test · solution analysis · gold recovery","USD 42.55"),
+  priceItem("price-071","metallurgy","Кинетика сорбции золота углём","Көмүргө алтындын сорбция кинетикасы","Gold adsorption kinetics on carbon","M6","Determination of semi-recovery time in liquor","USD 57.30"),
+  priceItem("price-072","metallurgy","Индекс истирания активированного угля","Активдештирилген көмүрдүн сүрүлүү индекси","Activated carbon abrasion index","M7","Perforated bowl test · carbon fines measurement","USD 24.60"),
+  priceItem("price-073","metallurgy","Кажущаяся плотность активированного угля","Активдештирилген көмүрдүн көрүнгөн тыгыздыгы","Apparent density of activated carbon","M8","Calibrated volume method","USD 20.55"),
+  priceItem("price-074","metallurgy","Влажность активированного угля","Активдештирилген көмүрдүн нымдуулугу","Activated carbon moisture","M9","Gravimetric method · 0.01–30%","USD 6.95"),
+  priceItem("price-075","metallurgy","Золото в концентрате","Концентраттагы алтын","Gold in concentrate","M10","Fire assay · gravimetric finish · 10–30 g","USD 73.80"),
+  priceItem("price-076","metallurgy","Многоэлементный анализ концентрата","Концентратты көп элементтүү анализдөө","Multi-element concentrate assay","M11","Aqua regia · ICP-AES","USD 16.90 or 6.55 + 1.65/element"),
+  priceItem("price-077","metallurgy","Золото в слитке","Куймадагы алтын","Gold in bullion","M12","Fire assay · gravimetric finish","USD 131.55"),
+  priceItem("price-078","metallurgy","Серебро в слитке","Куймадагы күмүш","Silver in bullion","M13","Fire assay · gravimetric finish","USD 131.55"),
+  priceItem("price-079","metallurgy","Примеси в слитках","Куймадагы кошулмалар","Impurities in bullion","M14","Aqua regia digestion · ICP-AES · multi-element","USD 74.00"),
+  priceItem("price-080","metallurgy","Золото в цианидном растворе","Цианид эритмесиндеги алтын","Gold in cyanide liquor","M15","ICP-AES","USD 8.20"),
+  priceItem("price-081","metallurgy","Серебро в цианидном растворе","Цианид эритмесиндеги күмүш","Silver in cyanide liquor","M15","ICP-AES","USD 4.50"),
+  priceItem("price-082","metallurgy","Элементы в цианидном растворе","Цианид эритмесиндеги элементтер","Elements in cyanide liquor","M16","Multi-element ICP-AES","USD 16.30 or 8.20 + 1.65/element"),
+  priceItem("price-083","metallurgy","34 элемента в цианидном растворе","Цианид эритмесиндеги 34 элемент","34 elements in cyanide liquor","M17","ICP-AES","USD 49.05 or 8.20 + 1.65/element"),
+  priceItem("price-084","metallurgy","Золото в кислотном растворе","Кислота эритмесиндеги алтын","Gold in acid liquor","M18","ICP-AES","USD 8.60"),
+  priceItem("price-085","metallurgy","Серебро в кислотном растворе","Кислота эритмесиндеги күмүш","Silver in acid liquor","M18","ICP-AES","USD 4.80"),
+  priceItem("price-086","metallurgy","Элементы в кислотном растворе","Кислота эритмесиндеги элементтер","Elements in acid liquor","M19","Multi-element ICP-AES","USD 15.45 or 6.10 + 1.80/element"),
+  priceItem("price-087","metallurgy","34 элемента в кислотном растворе","Кислота эритмесиндеги 34 элемент","34 elements in acid liquor","M20","ICP-AES","USD 48.20 or 6.90 + 1.80/element"),
+  priceItem("price-088","metallurgy","Программа бутылочного выщелачивания","Бөтөлкөдө эритүү программасы","Bottle-roll leaching test program","BR","Man-day $150 · complete program including report, price depends on approved scope","USD 6,700–11,780*"),
+  priceItem("price-089","metallurgy","Колонное выщелачивание","Колонкада эритүү","Column leaching test","","Man-day $150 · whole test program including report · final scope and price agreed after program approval","USD 11,550–23,000*"),
+  priceItem("price-090","metallurgy","Флотационные и гравитационные испытания","Флотациялык жана гравитациялык сыноолор","Flotation and gravity concentration tests","","Laboratory flotation · Knelson gravity concentration · price set after agreeing the test program","По запросу"),
 
   // Environment and water
-  priceItem("environment","Вода: физические параметры","Суу: физикалык параметрлер","Water: physical parameters","W1","Package $72.30 · pH $6.45 · turbidity $12.15 · conductivity $6.45 · dissolved oxygen $15.25 · TDS / TSS $16.00 each","USD 6.45–72.30"),
-  priceItem("environment","Вода: основные неорганические ионы","Суу: негизги органикалык эмес иондор","Water: major inorganic ions","W2","Package $126.10 · Ca, Mg, K, Na $2.45 each; HCO₃/CO₃ $12.85; Cl and Cl-IC $14.35; F and F-IC $8.00; SO₄ and SO₄-IC $14.35; hardness $15.90; alkalinity $14.35","USD 2.45–126.10"),
-  priceItem("environment","Вода: биогенные вещества","Суу: азык заттар","Water: nutrients","W3","Package $102.40 · ammonia $17.60; TKN $22.45; nitrate and nitrate-IC $14.35 each; nitrite $14.35; total phosphorus $19.30","USD 14.35–102.40"),
-  priceItem("environment","Вода: токсичные компоненты","Суу: уулуу компоненттер","Water: toxic components","W4","Package $88.30 · total cyanide $22.45 · WAD $28.15 · free cyanide $9.55 · thiocyanate $28.15","USD 9.55–88.30"),
-  priceItem("environment","Вода: дополнительные анализы","Суу: кошумча анализдер","Water: additional analyses","W5","Package $103.55 · COD $32.05 · BOD5 $44.00 · chromium III/VI $27.50","USD 27.50–103.55"),
-  priceItem("environment","Растворённые металлы в воде, ICP-AES","Суудагы эриген металлдар, ICP-AES","Dissolved metals in water, ICP-AES","W6","Package $40.60 + $3.40 filtering · Sb, Ba, Be, Cd, Cr, Co, Ag, Mn, Mo, Se, V, Hg, Si: $1.60 each; As, Cu, Pb, Ni, Zn, Al, Fe: $2.40 each; U: $3.00","USD 40.60 + filtering / analytes"),
-  priceItem("environment","Общие металлы в воде после кислотного разложения","Кислота менен ажыраткандан кийинки суудагы жалпы металлдар","Total metals in water after acid digestion","W7","Package $40.60 + $8.00 digestion · Sb, Ba, Be, Cd, Cr, Co, Ag, Mn, Mo, Se, V, Hg, Si: $1.60 each; As, Cu, Pb, Ni, Zn, Al, Fe: $2.40 each; U: $3.00","USD 40.60 + digestion / analytes"),
-  priceItem("environment","Следовые металлы в воде, ICP-MS","Суудагы из металлдар, ICP-MS","Trace metals in water, ICP-MS","W11","30 analytes · filtering + $3.40","USD 92.80 or 5.80 + 3.00/element"),
-  priceItem("environment","Пыль на фильтрах","Фильтрлердеги чаң","Dust on filters","D1–D4","Deposited particulates $14.05 · Ag $38.80 · Pb $28.95 · SiO₂ $48.75","USD 14.05–48.75"),
-  priceItem("environment","Нефтяные углеводороды в воде, GC-FID","Суудагы мунай углеводороддору, GC-FID","Petroleum hydrocarbons in water, GC-FID","W12","Fractions C6–C32 · minimum sample volume 1 L","USD 40.05"),
-  priceItem("environment","Полициклические ароматические углеводороды в воде","Суудагы полициклдүү ароматтык углеводороддор","PAHs in water","W13","16 analytes · GC-MS","USD 87.60"),
-  priceItem("environment","Почва: физико-химические показатели и металлы","Топурак: физикалык-химиялык көрсөткүчтөр жана металлдар","Soil: physicochemical parameters and metals","S1–S8","Dried solids $29.90 · fixed solids $43.50 · pH $27.50 · CEC / exchange cations $60.35 · nutrients $94.65 · cyanide $71.80 · ICP-AES scan $71.80 or $37.00 + $2.40/element","USD 27.50–94.65"),
-  priceItem("environment","Биологические образцы: растительность, моча, кровь, ткани","Биологиялык үлгүлөр: өсүмдүк, заара, кан, ткандар","Biological samples: vegetation, urine, blood and tissue","BIO-VEG · BIO-URI · BIO-BLO · BIO-TIS","Microwave digestion · ICP-MS · USD $34.40 + $3.45/element","USD 34.40 + 3.45/element"),
-  priceItem("environment","Кислотный дренаж: тест NAG","Кислоталык дренаж: NAG тести","Acid rock drainage: NAG test","ARD1","NAG pH · NAG","USD 27.00"),
-  priceItem("environment","Кислотный дренаж: ABA тест","Кислоталык дренаж: ABA тести","Acid rock drainage: ABA test","ARD2","Total sulphur, sulphide sulphur, AP, NP, NNP, paste pH","USD 131.25"),
+  priceItem("price-091","environment","Вода: физические параметры","Суу: физикалык параметрлер","Water: physical parameters","W1","Package $72.30 · pH $6.45 · turbidity $12.15 · conductivity $6.45 · dissolved oxygen $15.25 · TDS / TSS $16.00 each","USD 6.45–72.30"),
+  priceItem("price-092","environment","Вода: основные неорганические ионы","Суу: негизги органикалык эмес иондор","Water: major inorganic ions","W2","Package $126.10 · Ca, Mg, K, Na $2.45 each; HCO₃/CO₃ $12.85; Cl and Cl-IC $14.35; F and F-IC $8.00; SO₄ and SO₄-IC $14.35; hardness $15.90; alkalinity $14.35","USD 2.45–126.10"),
+  priceItem("price-093","environment","Вода: биогенные вещества","Суу: азык заттар","Water: nutrients","W3","Package $102.40 · ammonia $17.60; TKN $22.45; nitrate and nitrate-IC $14.35 each; nitrite $14.35; total phosphorus $19.30","USD 14.35–102.40"),
+  priceItem("price-094","environment","Вода: токсичные компоненты","Суу: уулуу компоненттер","Water: toxic components","W4","Package $88.30 · total cyanide $22.45 · WAD $28.15 · free cyanide $9.55 · thiocyanate $28.15","USD 9.55–88.30"),
+  priceItem("price-095","environment","Вода: дополнительные анализы","Суу: кошумча анализдер","Water: additional analyses","W5","Package $103.55 · COD $32.05 · BOD5 $44.00 · chromium III/VI $27.50","USD 27.50–103.55"),
+  priceItem("price-096","environment","Растворённые металлы в воде, ICP-AES","Суудагы эриген металлдар, ICP-AES","Dissolved metals in water, ICP-AES","W6","Package $40.60 + $3.40 filtering · Sb, Ba, Be, Cd, Cr, Co, Ag, Mn, Mo, Se, V, Hg, Si: $1.60 each; As, Cu, Pb, Ni, Zn, Al, Fe: $2.40 each; U: $3.00","USD 40.60 + filtering / analytes"),
+  priceItem("price-097","environment","Общие металлы в воде после кислотного разложения","Кислота менен ажыраткандан кийинки суудагы жалпы металлдар","Total metals in water after acid digestion","W7","Package $40.60 + $8.00 digestion · Sb, Ba, Be, Cd, Cr, Co, Ag, Mn, Mo, Se, V, Hg, Si: $1.60 each; As, Cu, Pb, Ni, Zn, Al, Fe: $2.40 each; U: $3.00","USD 40.60 + digestion / analytes"),
+  priceItem("price-098","environment","Следовые металлы в воде, ICP-MS","Суудагы из металлдар, ICP-MS","Trace metals in water, ICP-MS","W11","30 analytes · filtering + $3.40","USD 92.80 or 5.80 + 3.00/element"),
+  priceItem("price-099","environment","Пыль на фильтрах","Фильтрлердеги чаң","Dust on filters","D1–D4","Deposited particulates $14.05 · Ag $38.80 · Pb $28.95 · SiO₂ $48.75","USD 14.05–48.75"),
+  priceItem("price-100","environment","Нефтяные углеводороды в воде, GC-FID","Суудагы мунай углеводороддору, GC-FID","Petroleum hydrocarbons in water, GC-FID","W12","Fractions C6–C32 · minimum sample volume 1 L","USD 40.05"),
+  priceItem("price-101","environment","Полициклические ароматические углеводороды в воде","Суудагы полициклдүү ароматтык углеводороддор","PAHs in water","W13","16 analytes · GC-MS","USD 87.60"),
+  priceItem("price-102","environment","Почва: физико-химические показатели и металлы","Топурак: физикалык-химиялык көрсөткүчтөр жана металлдар","Soil: physicochemical parameters and metals","S1–S8","Dried solids $29.90 · fixed solids $43.50 · pH $27.50 · CEC / exchange cations $60.35 · nutrients $94.65 · cyanide $71.80 · ICP-AES scan $71.80 or $37.00 + $2.40/element","USD 27.50–94.65"),
+  priceItem("price-103","environment","Биологические образцы: растительность, моча, кровь, ткани","Биологиялык үлгүлөр: өсүмдүк, заара, кан, ткандар","Biological samples: vegetation, urine, blood and tissue","BIO-VEG · BIO-URI · BIO-BLO · BIO-TIS","Microwave digestion · ICP-MS · USD $34.40 + $3.45/element","USD 34.40 + 3.45/element"),
+  priceItem("price-104","environment","Кислотный дренаж: тест NAG","Кислоталык дренаж: NAG тести","Acid rock drainage: NAG test","ARD1","NAG pH · NAG","USD 27.00"),
+  priceItem("price-105","environment","Кислотный дренаж: ABA тест","Кислоталык дренаж: ABA тести","Acid rock drainage: ABA test","ARD2","Total sulphur, sulphide sulphur, AP, NP, NNP, paste pH","USD 131.25"),
 ];
 
 let priceCatalogCount = priceEntries.length;
@@ -312,9 +315,12 @@ const iconPaths = {
   drop:'<path d="M12 3s7 7 7 12a7 7 0 0 1-14 0c0-5 7-12 7-12Z"></path><path d="M9 16a3 3 0 0 0 3 3"></path>',
   check:'<path d="M4 7h16M4 12h8M4 17h8"></path><circle cx="18" cy="16" r="4"></circle><path d="m16.5 16 1 1 2-2"></path>'
 };
-let locale = localStorage.getItem("sael-locale") || "ru";
-if (!copy[locale]) locale = "ru";
-function t(key) { return copy[locale][key] || copy.ru[key] || key; }
+let locale = "ru";
+try { const saved = localStorage.getItem("sael-locale"); if (Object.hasOwn(copy, saved)) locale = saved; } catch {}
+function t(key) {
+  return copy[locale][key] || (key.startsWith("rfq.") ? window.saelQuoteText?.[locale]?.[key.slice(4)] : "") || copy.ru[key] || key;
+}
+let quoteBuilder;
 function escapeText(value) { return String(value ?? "").replace(/[&<>"']/g,function(char){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char];}); }
 function priceDetail(item) { return item.detailLocalized?.[locale] ?? window.saelPriceTranslations?.details[item.detail]?.[locale] ?? item.detail; }
 function priceAmount(item) {
@@ -396,9 +402,10 @@ function renderPrice() {
       '<td role="cell"><strong>'+escapeHTML(title)+'</strong>'+code+'</td>' +
       '<td role="cell"><span class="price-mobile-label" aria-hidden="true">'+methodLabel+'</span>'+escapeHTML(priceDetail(item))+'</td>' +
       '<td role="cell" class="price-amount"><span class="price-mobile-label" aria-hidden="true">'+priceLabel+'</span>'+escapeHTML(priceAmount(item))+'</td>' +
-      '<td role="cell"><a class="table-request" href="#request" aria-label="'+escapeHTML(quoteLabel+": "+title)+'">'+escapeHTML(quoteLabel)+'</a></td>' +
+      '<td role="cell"><a class="table-request" href="#request" data-quote-item="'+escapeHTML(item.id || "")+'" aria-label="'+escapeHTML(quoteLabel+": "+title)+'">'+escapeHTML(quoteLabel)+'</a></td>' +
       '</tr>';
   }).join("") : '<tr role="row"><td role="cell" colspan="5">'+escapeHTML(t("price.empty"))+'</td></tr>';
+  quoteBuilder?.syncPrice();
 }
 function renderSearchResults() {
  const input=document.getElementById("site-search"),target=document.getElementById("search-results");if(!target)return;
@@ -510,7 +517,7 @@ function renderAbout() {
 }
 function applyLocale(next) {
   locale = copy[next] ? next : "ru";
-  localStorage.setItem("sael-locale",locale);
+  try { localStorage.setItem("sael-locale",locale); } catch {}
   document.documentElement.lang = locale === "kg" ? "ky" : locale;
   document.querySelectorAll("[data-i18n]").forEach(function(el){const value=t(el.dataset.i18n);if(value)el.innerHTML=value;});
   document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el){el.placeholder=t(el.dataset.i18nPlaceholder);});
@@ -528,17 +535,22 @@ function applyLocale(next) {
   document.querySelector('meta[property="og:description"]')?.setAttribute("content",document.querySelector('meta[name="description"]')?.content || "");
   window.saelCmsRender?.(locale);
   bindFaqAccordions();
+  quoteBuilder?.render();
   document.querySelectorAll("#price-filter option[data-category]").forEach(function(opt){opt.textContent=categories[locale][opt.dataset.category];});
 }
 
 async function initializeSite() {
 await (window.saelCmsReady || Promise.resolve());
-window.saelCmsApply?.({copy,services,servicePhotos,priceEntries,categories,processSteps,clientSteps,faqs});
-for (const lang of ["ru","kg","en"]) for (const key of Object.keys(servicePageUi[lang])) {
-  if (copy[lang]["serviceUi."+key] !== undefined) servicePageUi[lang][key]=copy[lang]["serviceUi."+key];
+let appliedSnapshot = window.saelCmsContent;
+function applyPublishedContent() {
+  window.saelCmsApply?.({copy,services,servicePhotos,priceEntries,categories,processSteps,clientSteps,faqs});
+  for (const lang of ["ru","kg","en"]) for (const key of Object.keys(servicePageUi[lang])) {
+    if (copy[lang]["serviceUi."+key] !== undefined) servicePageUi[lang][key]=copy[lang]["serviceUi."+key];
+  }
+  priceCatalogCount=priceEntries.length;
+  priceCatalogCategories=Object.keys(categories.ru).filter(category=>priceEntries.some(item=>item.category===category));
 }
-priceCatalogCount=priceEntries.length;
-priceCatalogCategories=Object.keys(categories.ru).filter(category=>priceEntries.some(item=>item.category===category));
+applyPublishedContent();
 document.querySelectorAll("[data-lang]").forEach(function(btn){btn.addEventListener("click",function(){applyLocale(btn.dataset.lang);});});
 const year = document.getElementById("year"); if (year) year.textContent = new Date().getFullYear();
 const menuToggle = document.querySelector(".menu-toggle");
@@ -572,20 +584,34 @@ window.addEventListener("resize",function() {
 });
 
 const filterSelect = document.getElementById("price-filter");
-if (filterSelect) {
+function fillPriceFilter(chosen) {
+  if (!filterSelect) return;
+  filterSelect.querySelectorAll("option[data-category]").forEach(option => option.remove());
   priceCatalogCategories.forEach(function(cat) {
     const option = document.createElement("option");
     option.value = cat; option.dataset.category = cat; option.textContent = categories[locale][cat];
     filterSelect.appendChild(option);
   });
-  const requestedCategory = new URLSearchParams(location.search).get("category");
-  if (priceCatalogCategories.includes(requestedCategory)) filterSelect.value = requestedCategory;
+  filterSelect.value = priceCatalogCategories.includes(chosen) ? chosen : "";
+}
+if (filterSelect) {
+  fillPriceFilter(new URLSearchParams(location.search).get("category"));
   filterSelect.addEventListener("change",function() {
     const search = document.getElementById("price-search");
     if (search) search.value = "";
     renderPrice();
   });
 }
+window.addEventListener("sael:cms-update", function () {
+  if (window.saelCmsContent && window.saelCmsContent !== appliedSnapshot) {
+    appliedSnapshot = window.saelCmsContent;
+    applyPublishedContent();
+    fillPriceFilter(filterSelect?.value);
+    applyLocale(locale);
+  } else {
+    window.saelCmsRender?.(locale);
+  }
+});
 document.getElementById("price-search")?.addEventListener("input",renderPrice);
 const searchDialog = document.getElementById("search-dialog");
 document.querySelector(".search-open")?.addEventListener("click",function(){searchDialog.showModal();setTimeout(function(){document.getElementById("site-search")?.focus();},30);});
@@ -647,45 +673,78 @@ fileInput?.addEventListener("change",function(){
   if (error) { status.textContent=error;status.classList.add("is-visible"); }
   else { status.textContent="";status.classList.remove("is-visible"); }
 });
-document.getElementById("request-form")?.addEventListener("submit",function(e){
-  e.preventDefault();
+const requestForm = document.getElementById("request-form");
+if (requestForm && window.saelCreateQuoteBuilder) {
+  quoteBuilder = window.saelCreateQuoteBuilder({form: requestForm, entries: priceEntries, categories, language: () => locale, translate: t});
+}
+let previousAttempt = null;
+requestForm?.addEventListener("submit", async function(event) {
+  event.preventDefault();
+  const submitButton = requestForm.querySelector('button[type="submit"]');
+  if (submitButton.disabled) return;
   const status = document.getElementById("form-status");
+  const show = message => { status.textContent = message; status.classList.add("is-visible"); };
+  const items = quoteBuilder?.items() || [];
   const error = attachmentError();
-  if (error) { status.textContent=error;status.classList.add("is-visible");return; }
-  const form = e.currentTarget;
-  const submitButton = form.querySelector('button[type="submit"]');
-  if (location.protocol === "file:") {
-    status.textContent = t("form.status");
-    status.classList.add("is-visible");
-    status.scrollIntoView({behavior:"smooth",block:"nearest"});
+  if (error) { show(error); fileInput.focus(); return; }
+  if (quoteBuilder?.hasUnavailable()) {
+    show(t("rfq.changed"));
+    requestForm.querySelector(".quote-unavailable")?.closest("li").querySelector("button")?.focus();
     return;
   }
-  status.textContent = t("form.sending");
-  status.classList.add("is-visible");
-  if (submitButton) submitButton.disabled = true;
-  fetch(form.action, {method:"POST",body:new FormData(form),headers:{Accept:"application/json"}})
-    .then(function(response) {
-      if (response.ok) {
-        status.textContent = t("form.success");
-        form.reset();
-      } else if ([404,405,501,503].includes(response.status)) {
-        status.textContent = t("form.endpointMissing");
-      } else {
-        status.textContent = t("form.sendError");
-      }
-      status.scrollIntoView({behavior:"smooth",block:"nearest"});
-    })
-    .catch(function() {
-      status.textContent = t("form.endpointMissing");
-      status.scrollIntoView({behavior:"smooth",block:"nearest"});
-    })
-    .finally(function(){if(submitButton)submitButton.disabled=false;});
+  const research = requestForm.elements.research;
+  if (!items.length && !research.value.trim() && !fileInput?.files.length) {
+    show(t("rfq.missing"));
+    research.setCustomValidity(t("rfq.missing")); research.reportValidity(); research.setCustomValidity("");
+    return;
+  }
+  if (location.protocol === "file:") { show(t("form.status")); return; }
+  const body = new FormData(requestForm);
+  body.set("quote_items", JSON.stringify(items));
+  body.set("language", locale);
+  // A dropped response can be retried without registering the same request twice.
+  const fingerprint = JSON.stringify([...body].filter(([, value]) => typeof value === "string"));
+  const attachment = fileInput?.files[0];
+  if (previousAttempt?.fingerprint !== fingerprint || previousAttempt?.attachment !== attachment) {
+    previousAttempt = {fingerprint, attachment, key: window.crypto?.randomUUID?.()};
+  }
+  if (previousAttempt.key) body.set("request_key", previousAttempt.key);
+  const fields = [...requestForm.querySelectorAll("fieldset")];
+  submitButton.disabled = true;
+  fields.forEach(field => { field.disabled = true; });
+  show(t("form.sending"));
+  try {
+    const response = await fetch(requestForm.action, {method:"POST", body, headers:{Accept:"application/json"}});
+    const result = await response.json().catch(() => null);
+    if (response.ok && result?.ok === true) {
+      show(t("rfq.accepted") + (result.reference ? " " + t("rfq.reference") + " " + result.reference + "." : ""));
+      requestForm.reset();
+      quoteBuilder?.reset();
+      previousAttempt = null;
+    } else {
+      const errorKeys = {
+        quote_catalogue_changed: "rfq.changed", quote_items_invalid: "rfq.invalidVolume", quote_quantity_invalid: "rfq.invalidVolume",
+        quote_unit_invalid: "rfq.invalidVolume", file_too_large: "form.fileSizeError", invalid_file_content: "form.fileTypeError",
+        unsupported_file_type: "form.fileTypeError"
+      };
+      show(t(errorKeys[result?.error] || (response.status === 429 ? "rfq.rateLimit" : "form.sendError")));
+    }
+  } catch {
+    show(t("form.sendError"));
+  } finally {
+    fields.forEach(field => { field.disabled = false; });
+    submitButton.disabled = false;
+    status.scrollIntoView({block:"nearest"});
+  }
 });
 applyLocale(locale);
 const requestedService = services.find(function(service) {
   return service.id === new URLSearchParams(location.search).get("service");
 });
 const researchField = document.querySelector('#request-form textarea[name="research"]');
-if (requestedService && researchField && !researchField.value) researchField.value = requestedService.name[locale];
+if (requestedService && researchField && !researchField.value) {
+  quoteBuilder?.chooseCategory(requestedService.category);
+  researchField.value = requestedService.name[locale];
+}
 }
 initializeSite().catch(function(error){console.error("Site initialization failed",error);});
